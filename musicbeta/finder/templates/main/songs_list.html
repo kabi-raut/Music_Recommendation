@@ -1,0 +1,223 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Songs Library - Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-3 px-md-4">
+    <!-- Enhanced Header with Music Theme -->
+    <div class="mb-5">
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%); border-radius: 20px; padding: 2rem; border: 1px solid rgba(99, 102, 241, 0.15);">
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="width: 80px; height: 80px; background: var(--gradient-purple); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3); flex-shrink: 0;">
+                    <i class="fas fa-compact-disc fa-2x" style="color: white; animation: spin 4s linear infinite;"></i>
+                </div>
+                <div>
+                    <h2 class="mb-2" style="font-size: 2rem; font-weight: 900; letter-spacing: -0.5px;">Songs Library</h2>
+                    <p class="text-secondary mb-0">
+                        <i class="fas fa-sparkles me-2" style="color: var(--accent);"></i>Browse songs saved in your local collection
+                    </p>
+                    <a href="{% url 'discover_music' %}" class="btn btn-outline-primary btn-sm mt-3">
+                        <i class="fas fa-stream me-2"></i>Go to Live Discover
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Search and Filter Section -->
+    <div class="card mb-5" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 20px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);">
+        <div class="card-body p-4 p-md-5">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-12 col-md-7">
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="fas fa-search me-2" style="color: var(--primary);"></i>Search by Title or Artist
+                    </label>
+                    <input type="text" name="search" class="form-control" placeholder="Type song title, artist name..." value="{{ search_query }}" style="padding: 0.875rem 1.25rem; border-radius: 14px;">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="fas fa-filter me-2" style="color: var(--primary);"></i>Filter by Genre
+                    </label>
+                    <select name="genre" class="form-select" style="padding: 0.875rem 1rem; border-radius: 14px;">
+                        <option value="">All Genres</option>
+                        {% for genre in genres %}
+                        <option value="{{ genre.id }}" {% if genre.id|stringformat:"s" == selected_genre %}selected{% endif %}>{{ genre.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <button type="submit" class="btn btn-primary w-100" style="border-radius: 14px; padding: 0.875rem;">
+                        <i class="fas fa-search me-2"></i>Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Songs Grid with Enhanced Cards -->
+    {% if songs %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
+        {% for song in songs %}
+        <div class="col">
+            <div class="card h-100" style="overflow: hidden; position: relative; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(99, 102, 241, 0.1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+                <!-- Hover Background -->
+                <div style="position: absolute; top: -50%; right: -50%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%); pointer-events: none; transition: all 0.4s ease;"></div>
+                
+                <!-- Cover Image with Music Theme -->
+                <div class="position-relative" style="height: 240px; background: var(--gradient-purple); overflow: hidden; position: relative;">
+                    {% if song.cover_image %}
+                    <img src="{{ song.cover_image.url }}" class="w-100 h-100 object-fit-cover" alt="{{ song.title }}" style="transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);">
+                    {% else %}
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: var(--gradient-purple); position: relative;">
+                        <i class="fas fa-music fa-5x" style="color: white; opacity: 0.3; z-index: 1;"></i>
+                        <div class="music-bars" style="position: absolute; width: 100%; height: 100%;"></div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Genre Badge -->
+                    <div style="position: absolute; top: 12px; right: 12px;">
+                        <span class="badge" style="backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.95); color: var(--primary); font-weight: 600;">
+                            <i class="fas fa-tag me-1"></i>{{ song.genre.name }}
+                        </span>
+                    </div>
+                    
+                    <!-- Now Playing Indicator -->
+                    <div style="position: absolute; top: 12px; left: 12px; display: none; gap: 3px; align-items: flex-end; height: 30px; opacity: 0.8;" class="now-playing-indicator">
+                        <div style="width: 2px; height: 8px; background: white; border-radius: 1px; animation: musicBarAnimation 0.6s ease-in-out infinite; animation-delay: 0s;"></div>
+                        <div style="width: 2px; height: 14px; background: white; border-radius: 1px; animation: musicBarAnimation 0.6s ease-in-out infinite; animation-delay: 0.1s;"></div>
+                        <div style="width: 2px; height: 10px; background: white; border-radius: 1px; animation: musicBarAnimation 0.6s ease-in-out infinite; animation-delay: 0.2s;"></div>
+                    </div>
+                </div>
+
+                <!-- Song Info -->
+                <div class="card-body" style="position: relative; z-index: 2;">
+                    <h6 class="card-title mb-2 fw-bold" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.05rem;">
+                        {{ song.title }}
+                    </h6>
+                    <p class="card-text text-secondary small mb-2">
+                        <i class="fas fa-microphone me-1"></i>{{ song.artist }}
+                    </p>
+                    {% if song.duration %}
+                    <p class="card-text text-secondary small mb-3">
+                        <i class="fas fa-hourglass-end me-1"></i>{{ song.duration|add:"0"|floatformat:0 }}s
+                    </p>
+                    {% endif %}
+                    
+                    <!-- Audio Player with Enhanced Styling -->
+                    {% if song.audio_file %}
+                    <div class="mt-3">
+                        <audio controls class="w-100" style="height: 40px; border-radius: 10px; accent-color: var(--primary);">
+                            <source src="{{ song.audio_file.url }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card-footer bg-transparent border-top" style="border-color: rgba(99, 102, 241, 0.1) !important; position: relative; z-index: 2;">
+                    {% if request.user.is_authenticated %}
+                    <div class="d-flex gap-2" role="group">
+                        <button type="button" class="btn btn-primary btn-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#playlistModal{{ song.id }}" style="border-radius: 10px;">
+                            <i class="fas fa-plus me-1"></i>Playlist
+                        </button>
+                        {% if song.audio_file %}
+                        <a href="{{ song.audio_file.url }}" download class="btn btn-outline-primary btn-sm" style="border-radius: 10px;">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-sm w-100" style="border-radius: 10px;">
+                        <i class="fas fa-sign-in-alt me-1"></i>Login to Add
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if request.user.is_authenticated %}
+    <!-- Add to Playlist Modals (kept outside cards for reliable interaction) -->
+    {% for song in songs %}
+    <div class="modal fade" id="playlistModal{{ song.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%); border-bottom: 1px solid rgba(99, 102, 241, 0.15);">
+                    <h6 class="modal-title">
+                        <i class="fas fa-list-ul me-2" style="color: var(--primary);"></i>Add to Playlist
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    {% if user_playlists %}
+                    <div class="list-group">
+                        {% for playlist in user_playlists %}
+                        <a href="{% url 'add_song_to_playlist' playlist.id song.id %}" class="list-group-item list-group-item-action" style="background: rgba(99, 102, 241, 0.06); border: 1px solid rgba(99, 102, 241, 0.15); margin-bottom: 0.5rem; border-radius: 10px; transition: all 0.2s ease; padding: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <i class="fas fa-music" style="color: var(--primary);"></i>
+                                <strong>{{ playlist.name }}</strong>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-folder-open fa-3x mb-3" style="color: var(--text-secondary); opacity: 0.5;"></i>
+                        <p class="text-secondary">No playlists found.</p>
+                        <a href="{% url 'create_playlist' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-2"></i>Create Playlist
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% else %}
+    <!-- Enhanced Empty State -->
+    <div class="card border-0 p-5 text-center" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%); border-radius: 20px; border: 1px solid rgba(99, 102, 241, 0.15);">
+        <div class="mb-4">
+            <div style="width: 120px; height: 120px; margin: 0 auto; background: var(--gradient-purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0.15;">
+                <i class="fas fa-music fa-4x" style="color: white;"></i>
+            </div>
+        </div>
+        <h5 class="mb-2" style="font-size: 1.5rem; font-weight: 700;">No songs found</h5>
+        <p class="text-secondary mb-4">Try adjusting your search or filter criteria to find songs</p>
+        <a href="{% url 'songs_list' %}" class="btn btn-primary">
+            <i class="fas fa-sync me-2"></i>View All Songs
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    @keyframes musicBarAnimation {
+        0%, 100% { height: 10px; }
+        50% { height: 30px; }
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .card:hover img {
+        transform: scale(1.08);
+    }
+    
+    .card:hover {
+        box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15) !important;
+        transform: translateY(-4px);
+    }
+    
+    .list-group-item:hover {
+        background: rgba(99, 102, 241, 0.15) !important;
+        border-color: rgba(99, 102, 241, 0.3) !important;
+        transform: translateX(4px);
+    }
+</style>
+{% endblock %}

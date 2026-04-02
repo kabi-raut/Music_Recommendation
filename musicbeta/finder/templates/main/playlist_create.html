@@ -1,0 +1,51 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Create Playlist - Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+            <div class="card border-0" style="background: rgba(26, 26, 46, 0.7); backdrop-filter: blur(30px); border: 2px solid rgba(139, 92, 246, 0.3) !important; box-shadow: 0 20px 60px rgba(139, 92, 246, 0.2);">
+                <div class="card-header border-0" style="background: transparent;">
+                    <div class="text-center pt-3">
+                        <div style="width: 70px; height: 70px; margin: 0 auto 1rem; background: var(--gradient-purple); border-radius: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);">
+                            <i class="fas fa-list-ul fa-2x" style="color: white;"></i>
+                        </div>
+                        <h4 class="card-title mb-2" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">Create Playlist</h4>
+                        <p class="text-secondary small mb-0">Build your perfect music collection</p>
+                    </div>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="name" class="form-label fw-semibold mb-2">
+                                <i class="fas fa-tag me-2"></i>Playlist Name
+                            </label>
+                            <input id="name" name="name" class="form-control" placeholder="e.g., Summer Hits, Workout Mix" required style="padding: 0.75rem 1.25rem;">
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="description" class="form-label fw-semibold mb-2">
+                                <i class="fas fa-align-left me-2"></i>Description
+                            </label>
+                            <textarea id="description" name="description" class="form-control" rows="4" placeholder="Describe your playlist (optional)" style="padding: 0.75rem 1.25rem;"></textarea>
+                        </div>
+
+                        <div class="d-flex gap-3 justify-content-between flex-wrap">
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-primary flex-grow-1" style="padding: 0.75rem 1.5rem;">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary flex-grow-1" style="padding: 0.75rem 1.5rem;">
+                                <i class="fas fa-check me-2"></i>Create Playlist
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

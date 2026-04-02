@@ -1,0 +1,465 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Discover Dynamic Music - Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-3 px-md-4">
+    <!-- Header -->
+    <div class="mb-5">
+        <h2 class="mb-2">
+            <i class="fas fa-globe me-2" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+            Discover Live Music
+        </h2>
+        <p class="text-secondary mb-0">Stream millions of songs from Jamendo & iTunes - No downloads needed!</p>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="card mb-5" style="background: rgba(99, 102, 241, 0.04); border: 2px solid rgba(99, 102, 241, 0.15);">
+        <div class="card-body p-4 p-md-5">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-12 col-md-5">
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="fas fa-search me-2"></i>Search
+                    </label>
+                    <input type="text" name="search" class="form-control" placeholder="Search for songs, artists..." value="{{ search_query }}" style="padding: 0.75rem 1.25rem;">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="fas fa-database me-2"></i>Source
+                    </label>
+                    <select name="source" class="form-select" style="padding: 0.75rem 1rem;">
+                        <option value="all" {% if source_filter == 'all' %}selected{% endif %}>All Sources</option>
+                        <option value="jamendo" {% if source_filter == 'jamendo' %}selected{% endif %}>Jamendo (Full Songs)</option>
+                        <option value="itunes" {% if source_filter == 'itunes' %}selected{% endif %}>iTunes (30s Previews)</option>
+                        <option value="opensource" {% if source_filter == 'opensource' %}selected{% endif %}>Open Source Music</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="fas fa-music me-2"></i>Genre
+                    </label>
+                    <input type="text" name="genre" class="form-control" placeholder="rock, pop..." value="{{ genre_filter }}" style="padding: 0.75rem 1rem;">
+                </div>
+                <div class="col-12 col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Info Alert -->
+    {% if not search_query %}
+    <div class="alert alert-info mb-4" role="alert">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Showing trending music!</strong> Use the search above to find specific songs or artists.
+    </div>
+    {% endif %}
+
+    <!-- Content-Based Recommendations (Personalized for logged-in users) -->
+    {% if request.user.is_authenticated and recommended_songs %}
+    <div class="mb-5">
+        <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem;">
+            <div>
+                <h5 class="mb-2" style="font-size: 1.3rem; font-weight: 700;">
+                    <i class="fas fa-magic me-2" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>Recommended For You
+                </h5>
+                <p class="text-secondary mb-0 small">Based on your playlists and music taste</p>
+            </div>
+        </div>
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
+            {% for song in recommended_songs %}
+            <div class="col">
+                <div class="card h-100" style="overflow: hidden; position: relative; border: 2px solid rgba(99, 102, 241, 0.3); background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, transparent 100%);">
+                    <!-- Cover Image -->
+                    <div class="position-relative" style="height: 220px; background: var(--gradient-purple); overflow: hidden;">
+                        {% if song.cover_image_url %}
+                        <img src="{{ song.cover_image_url }}" class="w-100 h-100 object-fit-cover" alt="{{ song.title }}" loading="lazy" decoding="async" style="transition: transform 0.3s ease;" onerror="this.style.display='none'">
+                        {% elif song.cover_image %}
+                        <img src="{{ song.cover_image.url }}" class="w-100 h-100 object-fit-cover" alt="{{ song.title }}" loading="lazy" decoding="async" style="transition: transform 0.3s ease;" onerror="this.style.display='none'">
+                        {% else %}
+                        <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: var(--gradient-purple);">
+                            <i class="fas fa-music fa-5x" style="color: white; opacity: 0.3;"></i>
+                        </div>
+                        {% endif %}
+                        <div style="position: absolute; top: 10px; right: 10px;">
+                            <span class="badge" style="backdrop-filter: blur(10px); background: rgba(0, 0, 0, 0.5);">
+                                <i class="fas fa-tag me-1"></i>{{ song.get_genre_display }}
+                            </span>
+                        </div>
+                        <div style="position: absolute; top: 10px; left: 10px;">
+                            <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); backdrop-filter: blur(10px);">
+                                <i class="fas fa-sparkles me-1"></i>For You
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Song Info -->
+                    <div class="card-body">
+                        <h6 class="card-title mb-2 fw-bold" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                            {{ song.title|truncatechars:40 }}
+                        </h6>
+                        <p class="card-text text-secondary small mb-2">
+                            <i class="fas fa-microphone me-1"></i>{{ song.artist|truncatechars:35 }}
+                        </p>
+                        {% if song.duration %}
+                        <p class="card-text text-secondary small mb-3">
+                            <i class="fas fa-clock me-1"></i>{{ song.duration }}s
+                        </p>
+                        {% endif %}
+                        
+                        <!-- Audio Player -->
+                        {% if song.get_audio_source %}
+                        <div class="mt-3">
+                            <audio controls class="w-100" style="height: 36px; border-radius: 8px;" preload="none">
+                                <source src="{{ song.get_audio_source }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="card-footer bg-transparent border-top" style="border-color: rgba(139, 92, 246, 0.2) !important;">
+                        <button class="btn btn-primary btn-sm w-100 add-to-playlist-btn" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#playlistModal"
+                                data-song-title="{{ song.title }}"
+                                data-song-artist="{{ song.artist }}"
+                                data-song-genre="{{ song.get_genre_display }}"
+                                data-song-audio="{{ song.get_audio_source }}"
+                                data-song-cover="{{ song.get_cover_image }}"
+                                data-song-duration="{{ song.duration }}"
+                                data-song-external-id="{{ song.external_id }}"
+                                data-song-source="{{ song.source }}">
+                            <i class="fas fa-plus me-1"></i>Save to Playlist
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Songs Grid -->
+    {% if songs %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
+        {% for song in songs %}
+        <div class="col">
+            <div class="card h-100" style="overflow: hidden; position: relative;">
+                <!-- Cover Image -->
+                <div class="position-relative" style="height: 220px; background: var(--gradient-purple); overflow: hidden;">
+                    {% if song.cover_image %}
+                    <img src="{{ song.cover_image }}" class="w-100 h-100 object-fit-cover" alt="{{ song.title }}" loading="lazy" decoding="async" style="transition: transform 0.3s ease;" onerror="this.style.display='none'">
+                    {% else %}
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: var(--gradient-purple);">
+                        <i class="fas fa-music fa-5x" style="color: white; opacity: 0.3;"></i>
+                    </div>
+                    {% endif %}
+                    <div style="position: absolute; top: 10px; right: 10px;">
+                        <span class="badge" style="backdrop-filter: blur(10px); background: rgba(0, 0, 0, 0.5);">
+                            <i class="fas fa-tag me-1"></i>{{ song.genre }}
+                        </span>
+                    </div>
+                    <div style="position: absolute; top: 10px; left: 10px;">
+                        <span class="badge bg-success" style="backdrop-filter: blur(10px);">
+                            <i class="fas fa-stream me-1"></i>{{ song.source|upper }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Song Info -->
+                <div class="card-body">
+                    <h6 class="card-title mb-2 fw-bold" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                        {{ song.title|truncatechars:40 }}
+                    </h6>
+                    <p class="card-text text-secondary small mb-2">
+                        <i class="fas fa-microphone me-1"></i>{{ song.artist|truncatechars:35 }}
+                    </p>
+                    {% if song.duration %}
+                    <p class="card-text text-secondary small mb-3">
+                        <i class="fas fa-clock me-1"></i>{{ song.duration }}s
+                    </p>
+                    {% endif %}
+                    
+                    <!-- Audio Player -->
+                    {% if song.audio_url %}
+                    <div class="mt-3">
+                        <audio controls class="w-100" style="height: 36px; border-radius: 8px;" preload="none">
+                            <source src="{{ song.audio_url }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card-footer bg-transparent border-top" style="border-color: rgba(139, 92, 246, 0.2) !important;">
+                    {% if request.user.is_authenticated %}
+                    <button class="btn btn-primary btn-sm w-100 add-to-playlist-btn" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#playlistModal"
+                            data-song-title="{{ song.title }}"
+                            data-song-artist="{{ song.artist }}"
+                            data-song-genre="{{ song.genre }}"
+                            data-song-audio="{{ song.audio_url }}"
+                            data-song-cover="{{ song.cover_image }}"
+                            data-song-duration="{{ song.duration }}"
+                            data-song-external-id="{{ song.external_id }}"
+                            data-song-source="{{ song.source }}">
+                        <i class="fas fa-plus me-1"></i>Save to Playlist
+                    </button>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="fas fa-sign-in-alt me-1"></i>Login to Save
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-4x text-secondary mb-3"></i>
+        <h4 class="text-secondary">No songs found</h4>
+        <p class="text-muted">Try a different search term or genre</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Playlist Modal (for authenticated users) -->
+{% if request.user.is_authenticated %}
+<div class="modal fade" id="playlistModal" tabindex="-1" aria-labelledby="playlistModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="playlistModalLabel">
+                    <i class="fas fa-list me-2"></i>Add to Playlist
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% if user_playlists %}
+                <p class="text-muted small mb-2">Selected song:</p>
+                <div class="alert alert-light border mb-3" id="selectedSongLabel">
+                    <i class="fas fa-music me-2"></i><span>Choose a song first</span>
+                </div>
+
+                <label class="form-label fw-semibold">Choose playlist</label>
+                <div class="list-group mb-2" id="playlistChooser">
+                    {% for playlist in user_playlists %}
+                    <button type="button" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center playlist-option {% if forloop.first %}active{% endif %}" data-playlist-id="{{ playlist.id }}">
+                        <span><i class="fas fa-folder me-2"></i>{{ playlist.name }}</span>
+                        <span class="badge bg-secondary playlist-count-badge" data-playlist-id="{{ playlist.id }}">{{ playlist.song_count }} songs</span>
+                    </button>
+                    {% endfor %}
+                </div>
+                <select id="playlistSelect" class="form-select d-none" aria-hidden="true" tabindex="-1">
+                    {% for playlist in user_playlists %}
+                    <option value="{{ playlist.id }}" data-playlist-name="{{ playlist.name|escape }}" {% if forloop.first %}selected{% endif %}>{{ playlist.name }} ({{ playlist.song_count }} songs)</option>
+                    {% endfor %}
+                </select>
+
+                <button type="button" class="btn btn-primary w-100 mt-3" id="confirmAddToPlaylistBtn">
+                    <i class="fas fa-plus me-2"></i>Add Song to Playlist
+                </button>
+                <div class="small text-secondary mt-2" id="addToPlaylistStatus"></div>
+                {% else %}
+                <p class="text-center text-muted py-3">
+                    <i class="fas fa-folder-open fa-2x mb-2"></i><br>
+                    No playlists yet. <a href="{% url 'create_playlist' %}">Create one</a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentSongData = {};
+
+    function getCookie(name) {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith(name + '='));
+        return cookieValue ? decodeURIComponent(cookieValue.split('=')[1]) : '';
+    }
+
+    const modalEl = document.getElementById('playlistModal');
+    const confirmBtn = document.getElementById('confirmAddToPlaylistBtn');
+    const playlistSelect = document.getElementById('playlistSelect');
+    const playlistOptions = Array.from(document.querySelectorAll('.playlist-option'));
+    const statusEl = document.getElementById('addToPlaylistStatus');
+    const songLabelEl = document.getElementById('selectedSongLabel');
+
+    if (modalEl && modalEl.parentElement !== document.body) {
+        document.body.appendChild(modalEl);
+    }
+
+    if (modalEl) {
+        modalEl.addEventListener('shown.bs.modal', function() {
+            modalEl.style.zIndex = '1060';
+            const dialog = modalEl.querySelector('.modal-dialog');
+            if (dialog) {
+                dialog.style.pointerEvents = 'auto';
+            }
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.style.zIndex = '1050';
+            });
+        });
+    }
+
+    playlistOptions.forEach(optionBtn => {
+        optionBtn.addEventListener('click', function() {
+            const selectedPlaylistId = this.dataset.playlistId;
+            if (playlistSelect) {
+                playlistSelect.value = selectedPlaylistId;
+            }
+
+            playlistOptions.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    document.querySelectorAll('.add-to-playlist-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentSongData = {
+                title: this.dataset.songTitle,
+                artist: this.dataset.songArtist,
+                genre: this.dataset.songGenre,
+                audio_url: this.dataset.songAudio,
+                cover_image: this.dataset.songCover,
+                duration: this.dataset.songDuration,
+                external_id: this.dataset.songExternalId,
+                source: this.dataset.songSource
+            };
+
+            if (songLabelEl) {
+                songLabelEl.innerHTML = '<i class="fas fa-music me-2"></i><strong>' + (currentSongData.title || 'Unknown') + '</strong> by ' + (currentSongData.artist || 'Unknown');
+            }
+            if (statusEl) {
+                statusEl.textContent = '';
+                statusEl.className = 'small text-secondary mt-2';
+            }
+        });
+    });
+
+    if (!confirmBtn || !playlistSelect) {
+        return;
+    }
+
+    confirmBtn.addEventListener('click', function() {
+        if (!currentSongData.title || !currentSongData.audio_url) {
+            statusEl.textContent = 'Please select a valid song with playable audio first.';
+            statusEl.className = 'small text-danger mt-2';
+            return;
+        }
+
+        const playlistId = playlistSelect.value;
+        if (!playlistId) {
+            statusEl.textContent = 'Please choose a playlist first.';
+            statusEl.className = 'small text-danger mt-2';
+            return;
+        }
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+
+        const formData = new FormData();
+        Object.keys(currentSongData).forEach(key => {
+            formData.append(key, currentSongData[key] || '');
+        });
+        formData.append('playlist_id', playlistId);
+
+        fetch('{% url "save_external_song" %}', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(async (response) => {
+            if (response.status === 401) {
+                return {
+                    ok: false,
+                    authRequired: true,
+                    data: { status: 'error', message: 'Session expired. Redirecting to login...' }
+                };
+            }
+            const data = await response.json().catch(() => ({ status: 'error', message: 'Unexpected server response' }));
+            return { ok: response.ok, authRequired: false, data };
+        })
+        .then(({ ok, authRequired, data }) => {
+            if (authRequired || data.code === 'auth_required') {
+                statusEl.textContent = data.message || 'Please login again.';
+                statusEl.className = 'small text-warning mt-2';
+                setTimeout(() => {
+                    window.location.href = '{% url "login" %}?next={{ request.path }}';
+                }, 700);
+                return;
+            }
+
+            if (ok && data.status === 'success') {
+                statusEl.textContent = data.message;
+                statusEl.className = 'small text-success mt-2';
+
+                if (typeof data.playlist_song_count === 'number' && data.playlist_id) {
+                    const selectedOption = playlistSelect.querySelector('option[value="' + data.playlist_id + '"]');
+                    const badge = document.querySelector('.playlist-count-badge[data-playlist-id="' + data.playlist_id + '"]');
+
+                    if (badge) {
+                        badge.textContent = data.playlist_song_count + ' songs';
+                    }
+
+                    if (selectedOption) {
+                        const playlistName = selectedOption.dataset.playlistName || selectedOption.textContent;
+                        selectedOption.textContent = playlistName + ' (' + data.playlist_song_count + ' songs)';
+                    }
+                }
+
+                setTimeout(() => {
+                    bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                }, 600);
+            } else {
+                statusEl.textContent = data.message || 'Could not add song.';
+                statusEl.className = 'small text-warning mt-2';
+            }
+        })
+        .catch(() => {
+            statusEl.textContent = 'Network error. Please try again.';
+            statusEl.className = 'small text-danger mt-2';
+        })
+        .finally(() => {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Add Song to Playlist';
+        });
+    });
+});
+</script>
+
+<style>
+    .playlist-option {
+        border: 1px solid rgba(99, 102, 241, 0.18);
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .playlist-option:hover {
+        background: rgba(99, 102, 241, 0.12);
+        border-color: rgba(99, 102, 241, 0.35);
+    }
+
+    .playlist-option.active,
+    .playlist-option.active:hover {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.16) 0%, rgba(236, 72, 153, 0.16) 100%);
+        border-color: rgba(99, 102, 241, 0.55);
+        color: var(--text-primary);
+    }
+</style>
+{% endif %}
+
+{% endblock %}

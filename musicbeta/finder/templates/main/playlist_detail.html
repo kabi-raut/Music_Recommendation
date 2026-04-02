@@ -1,0 +1,126 @@
+{% extends 'main/base.html' %}
+
+{% block title %}{{ playlist.name }} - Finder{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-3 px-md-4">
+    <!-- Playlist Header -->
+    <div class="mb-5">
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-sm mb-3">
+            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+        </a>
+        <h2 class="mb-2">
+            <i class="fas fa-list-ul me-2 text-primary"></i>{{ playlist.name }}
+        </h2>
+        <p class="text-secondary mb-0">{{ playlist.description }}</p>
+    </div>
+
+    <!-- Subscription Status Info -->
+    {% if not is_premium %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%); border: 1px solid rgba(255, 193, 7, 0.3);">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Free Plan Limit:</strong> You can add up to <strong>{{ song_limit|floatformat:0 }}</strong> songs to this playlist. 
+        <strong>Current: {{ current_song_count }}</strong>/{{ song_limit|floatformat:0 }}
+        <a href="{% url 'subscription_page' %}" class="btn btn-sm btn-warning ms-2">
+            <i class="fas fa-crown me-1"></i>Upgrade to Premium
+        </a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% else %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%); border: 1px solid rgba(99, 102, 241, 0.3);">
+        <i class="fas fa-crown me-2" style="color: var(--primary);"></i>
+        <strong>Premium Member:</strong> You have unlimited songs in your playlists!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="mb-4">
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'edit_playlist' playlist.id %}" class="btn btn-primary">
+                <i class="fas fa-edit me-1"></i>Edit
+            </a>
+            {% if is_premium or current_song_count < song_limit %}
+            <a href="{% url 'discover_music' %}" class="btn btn-outline-primary">
+                <i class="fas fa-plus me-1"></i>Add Songs
+            </a>
+            {% else %}
+            <button class="btn btn-outline-secondary" disabled title="Playlist is full. Upgrade to Premium for unlimited songs.">
+                <i class="fas fa-plus me-1"></i>Add Songs (Limit Reached)
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Songs List -->
+    {% if songs %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
+        {% for song in songs %}
+        <div class="col">
+            <div class="card h-100">
+                <!-- Cover Image -->
+                <div class="position-relative" style="height: 180px; background-color: var(--tertiary-bg); overflow: hidden;">
+                    {% if song.get_cover_image %}
+                    <img src="{{ song.get_cover_image }}" class="w-100 h-100 object-fit-cover" alt="{{ song.title }}">
+                    {% else %}
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-music fa-5x text-secondary opacity-50"></i>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Song Info -->
+                <div class="card-body">
+                    <h6 class="card-title text-primary mb-1">{{ song.title }}</h6>
+                    <p class="card-text text-secondary small mb-2">{{ song.artist }}</p>
+                    <p class="card-text text-secondary small">
+                        <i class="fas fa-tag me-1"></i>{{ song.get_genre_display }}
+                    </p>
+                    <p class="card-text text-secondary small mb-2">
+                        <i class="fas fa-database me-1"></i>{{ song.source|upper }}
+                    </p>
+                    
+                    <!-- Audio Player -->
+                    {% if song.get_audio_source %}
+                    <div class="mt-3">
+                        <audio controls class="w-100" style="height: 32px; border-radius: 4px;">
+                            <source src="{{ song.get_audio_source }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card-footer bg-transparent border-top">
+                    <div class="d-flex gap-2">
+                        {% if song.audio_file %}
+                        <a href="{{ song.audio_file.url }}" download class="btn btn-outline-primary btn-sm flex-grow-1">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        {% elif song.audio_url %}
+                        <a href="{{ song.audio_url }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm flex-grow-1">
+                            <i class="fas fa-play me-1"></i>Open
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'remove_song_from_playlist' playlist.id song.id %}" class="btn btn-outline-danger btn-sm" title="Remove from playlist" onclick="return confirm('Remove this song from your playlist?')">
+                            <i class="fas fa-trash me-1"></i>Remove
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card border-0 p-5 text-center">
+        <i class="fas fa-music fa-5x text-secondary opacity-50 mb-4"></i>
+        <h5 class="mb-2">No songs in this playlist</h5>
+        <p class="text-secondary mb-4">Start adding songs to build your playlist</p>
+        <a href="{% url 'discover_music' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Add Songs
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

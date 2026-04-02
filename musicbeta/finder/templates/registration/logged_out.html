@@ -1,0 +1,22 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Logged out - Finder{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h3 class="card-title">You have been logged out</h3>
+          <p class="card-text text-muted">Thanks for visiting Finder. You can sign in again or continue browsing the public site.</p>
+          <div class="d-flex justify-content-center gap-2">
+            <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary">Home</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends 'main/base.html' %}
+{% block title %}Edit Profile - Finder{% endblock %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+        <div class="col-12 col-sm-11 col-md-8 col-lg-6 col-xl-5">
+            <div class="card border-0" style="background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(22px) saturate(150%); border: 1px solid rgba(99, 102, 241, 0.14) !important; box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div style="width: 72px; height: 72px; margin: 0 auto 1rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.9) 0%, rgba(236, 72, 153, 0.85) 100%); border-radius: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 24px rgba(99, 102, 241, 0.22);">
+                            <i class="fas fa-user-edit fa-2x" style="color: white;"></i>
+                        </div>
+                        <h2 class="mb-2" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">Edit Profile</h2>
+                        <p class="text-secondary mb-0">Update your account details</p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(245, 87, 108, 0.08); border: 1px solid rgba(245, 87, 108, 0.22); color: #c81e3a;">
+                            {{ form.non_field_errors }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            {{ form.username|as_crispy_field }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.first_name|as_crispy_field }}
+                        </div>
+                        <div class="mb-3">
+                            {{ form.email|as_crispy_field }}
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3">
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary w-50 py-2 fw-semibold">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary w-50 py-2 fw-semibold">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

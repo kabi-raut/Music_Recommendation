@@ -54,12 +54,44 @@
         </div>
     </div>
 
+    {% if request.user.is_authenticated and user_playlists %}
+    <form method="post" action="{% url 'bulk_add_songs_to_playlist' %}" class="mb-4" id="bulkAddSongsForm">
+        {% csrf_token %}
+        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%); border-radius: 18px;">
+            <div class="card-body d-flex flex-wrap gap-3 align-items-end">
+                <div class="flex-grow-1" style="min-width: 240px;">
+                    <label class="form-label fw-semibold">Add selected songs to playlist</label>
+                    <select name="playlist_id" class="form-select" required>
+                        <option value="">Choose a playlist</option>
+                        {% for playlist in user_playlists %}
+                        <option value="{{ playlist.id }}">{{ playlist.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Selected Songs
+                    </button>
+                </div>
+                <div class="text-secondary small ms-auto">
+                    Select the songs you want, then add them in one action.
+                </div>
+            </div>
+        </div>
+    </form>
+    {% endif %}
+
     <!-- Songs Grid with Enhanced Cards -->
     {% if songs %}
     <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
         {% for song in songs %}
         <div class="col">
             <div class="card h-100" style="overflow: hidden; position: relative; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid rgba(99, 102, 241, 0.1); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
+                {% if request.user.is_authenticated and user_playlists %}
+                <div style="position: absolute; top: 12px; left: 12px; z-index: 3;">
+                    <input class="form-check-input song-select-box" type="checkbox" name="song_ids" value="{{ song.id }}" form="bulkAddSongsForm" style="width: 1.15rem; height: 1.15rem;">
+                </div>
+                {% endif %}
                 <!-- Hover Background -->
                 <div style="position: absolute; top: -50%; right: -50%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%); pointer-events: none; transition: all 0.4s ease;"></div>
                 
@@ -117,7 +149,18 @@
                 <!-- Action Buttons -->
                 <div class="card-footer bg-transparent border-top" style="border-color: rgba(99, 102, 241, 0.1) !important; position: relative; z-index: 2;">
                     {% if request.user.is_authenticated %}
-                    <div class="d-flex gap-2" role="group">
+                    <div class="d-flex gap-2 align-items-center" role="group">
+                        {% if song.id in user_playlist_song_ids %}
+                        <button type="button"
+                                class="btn btn-sm {% if song.id in liked_song_ids %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                                data-like-button="true"
+                                data-song-id="{{ song.id }}"
+                                data-liked="{% if song.id in liked_song_ids %}1{% else %}0{% endif %}"
+                                title="{% if song.id in liked_song_ids %}Unlike{% else %}Like{% endif %} this song"
+                                style="border-radius: 10px; min-width: 42px;">
+                            <i class="fas {% if song.id in liked_song_ids %}fa-heart{% else %}fa-heart{% endif %}"></i>
+                        </button>
+                        {% endif %}
                         <button type="button" class="btn btn-primary btn-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#playlistModal{{ song.id }}" style="border-radius: 10px;">
                             <i class="fas fa-plus me-1"></i>Playlist
                         </button>
@@ -177,6 +220,7 @@
     </div>
     {% endfor %}
     {% endif %}
+    </form>
     {% else %}
     <!-- Enhanced Empty State -->
     <div class="card border-0 p-5 text-center" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%); border-radius: 20px; border: 1px solid rgba(99, 102, 241, 0.15);">
@@ -219,5 +263,44 @@
         border-color: rgba(99, 102, 241, 0.3) !important;
         transform: translateX(4px);
     }
+
+    .song-select-box {
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
+        cursor: pointer;
+    }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+
+    async function toggleLike(button) {
+        const songId = button.dataset.songId;
+        try {
+            const response = await fetch('{% url 'like_song' %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: new URLSearchParams({ song_id: songId }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Could not update like');
+
+            const liked = data.action === 'liked';
+            button.dataset.liked = liked ? '1' : '0';
+            button.classList.toggle('btn-danger', liked);
+            button.classList.toggle('btn-outline-danger', !liked);
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    document.querySelectorAll('[data-like-button="true"]').forEach((button) => {
+        button.addEventListener('click', () => toggleLike(button));
+    });
+});
+</script>
 {% endblock %}

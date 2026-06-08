@@ -31,7 +31,8 @@ def _load_local_env_file(base_dir):
         key = key.strip()
         value = value.strip().strip('"').strip("'")
         if key:
-            os.environ.setdefault(key, value)
+            # Let local .env control project-specific settings consistently.
+            os.environ[key] = value
 
 
 _load_local_env_file(BASE_DIR)
@@ -173,14 +174,20 @@ _khalti_default_base_url = (
     'https://khalti.com' if KHALTI_MODE == 'live' else 'https://dev.khalti.com'
 )
 
-KHALTI_PUBLIC_KEY = os.environ.get(
-    'KHALTI_PUBLIC_KEY',
-    os.environ.get('KHALTI_SANDBOX_PUBLIC_KEY', ''),
-)
-KHALTI_SECRET_KEY = os.environ.get(
-    'KHALTI_SECRET_KEY',
-    os.environ.get('KHALTI_SANDBOX_SECRET_KEY', ''),
-)
+def _get_first_env_value(*names):
+    for name in names:
+        value = (os.environ.get(name, '') or '').strip()
+        if value:
+            return value
+    return ''
+
+
+if KHALTI_MODE == 'live':
+    KHALTI_PUBLIC_KEY = _get_first_env_value('KHALTI_LIVE_PUBLIC_KEY', 'KHALTI_PUBLIC_KEY')
+    KHALTI_SECRET_KEY = _get_first_env_value('KHALTI_LIVE_SECRET_KEY', 'KHALTI_SECRET_KEY')
+else:
+    KHALTI_PUBLIC_KEY = _get_first_env_value('KHALTI_SANDBOX_PUBLIC_KEY', 'KHALTI_PUBLIC_KEY')
+    KHALTI_SECRET_KEY = _get_first_env_value('KHALTI_SANDBOX_SECRET_KEY', 'KHALTI_SECRET_KEY')
 
 KHALTI_INITIATE_URL = os.environ.get(
     'KHALTI_INITIATE_URL',
@@ -193,3 +200,30 @@ KHALTI_LOOKUP_URL = os.environ.get(
 
 KHALTI_WEBSITE_URL = os.environ.get('KHALTI_WEBSITE_URL', '').strip()
 KHALTI_RETURN_URL_BASE = os.environ.get('KHALTI_RETURN_URL_BASE', '').strip()
+
+# Simple premium subscription configuration
+SUBSCRIPTION_PRICE_NPR = int(os.environ.get('SUBSCRIPTION_PRICE_NPR', '999'))
+SUBSCRIPTION_DURATION_DAYS = int(os.environ.get('SUBSCRIPTION_DURATION_DAYS', '30'))
+
+# Operations admin credentials are intentionally loaded from the environment so
+# they are not embedded in source control.
+OPS_ADMIN_USERNAME = os.environ.get('OPS_ADMIN_USERNAME', '').strip()
+OPS_ADMIN_PASSWORD = os.environ.get('OPS_ADMIN_PASSWORD', '').strip()
+
+# Jamendo API client id for open source music search
+JAMENDO_CLIENT_ID = os.environ.get('JAMENDO_CLIENT_ID', '56d30c95').strip()
+
+# Jellyfin (self-hosted) source configuration
+JELLYFIN_SERVER_URL = os.environ.get('JELLYFIN_SERVER_URL', '').strip()
+JELLYFIN_API_KEY = os.environ.get('JELLYFIN_API_KEY', '').strip()
+JELLYFIN_USER_ID = os.environ.get('JELLYFIN_USER_ID', '').strip()
+
+# SMTP email configuration (used for payment receipts)
+# Sensitive credentials should be set via environment variables
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 'yes')
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)

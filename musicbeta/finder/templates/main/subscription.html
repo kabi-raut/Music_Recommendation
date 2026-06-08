@@ -4,214 +4,166 @@
 
 {% block content %}
 <div class="container-fluid py-4 px-3 px-md-4">
-    <!-- Header -->
-    <div class="mb-5">
-        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%); border-radius: 20px; padding: 2rem; border: 1px solid rgba(99, 102, 241, 0.15);">
-            <div style="display: flex; align-items: center; gap: 1.5rem;">
-                <div style="width: 80px; height: 80px; background: var(--gradient-purple); border-radius: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3); flex-shrink: 0;">
-                    <i class="fas fa-crown fa-2x" style="color: white;"></i>
-                </div>
-                <div>
-                    <h2 class="mb-2" style="font-size: 2rem; font-weight: 900; letter-spacing: -0.5px;">Subscription Plans</h2>
-                    <p class="text-secondary mb-0">
-                        <i class="fas fa-sparkles me-2" style="color: var(--accent);"></i>Unlock premium features and enjoy unlimited music
-                    </p>
-                </div>
-            </div>
-        </div>
+    <div class="mb-4">
+        <h2 class="mb-2"><i class="fas fa-crown me-2"></i>Subscription Plans</h2>
+        <p class="text-secondary mb-0">View your current status and choose from all active plans.</p>
     </div>
 
-    <!-- Current Status -->
-    <div class="card mb-5" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%); border: 1px solid rgba(99, 102, 241, 0.15); border-radius: 20px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);">
-        <div class="card-body p-4 p-md-5">
-            <h5 class="mb-3">Your Current Plan</h5>
-            <div style="display: flex; align-items: center; gap: 2rem;">
-                <div>
-                    <p class="mb-2"><strong>Status:</strong> 
-                        {% if is_premium %}
-                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Premium Active</span>
-                        {% if subscription.expiry_date %}
-                        <br><small class="text-muted">Expires: {{ subscription.expiry_date|date:"M d, Y" }}</small>
-                        {% endif %}
-                        {% else %}
-                        <span class="badge bg-secondary"><i class="fas fa-ban me-1"></i>Free Plan</span>
-                        {% endif %}
-                    </p>
-                    <p class="mb-0"><strong>Song Limit per Playlist:</strong>
-                        {% if is_premium %}
-                        <span class="badge bg-primary">Unlimited</span>
-                        {% else %}
-                        <span class="badge bg-warning">5 songs</span>
-                        {% endif %}
-                    </p>
-                </div>
-            </div>
-        </div>
+    <div id="khaltiLoadingAlert" class="alert alert-primary d-none" role="status" aria-live="polite">
+        <i class="fas fa-spinner fa-spin me-2"></i>Connecting to Khalti sandbox. Please wait...
     </div>
 
-    <!-- Pricing Plans -->
-    <div class="row g-4 mb-5">
-        <!-- Free Plan -->
-        <div class="col-lg-6">
-            <div class="card h-100" style="border: 2px solid rgba(99, 102, 241, 0.2); overflow: hidden;">
-                <div class="card-header" style="background: rgba(99, 102, 241, 0.08); border-bottom: 2px solid rgba(99, 102, 241, 0.2);">
-                    <h5 class="mb-0"><i class="fas fa-gift me-2"></i>Free Plan</h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="mb-4">
-                        <span style="font-size: 2.5rem; font-weight: 900; color: var(--primary);">$0</span>
-                        <span class="text-secondary">/month</span>
-                    </div>
-                    
-                    <h6 class="mb-3">Features:</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            <strong>5 songs</strong> per playlist
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Local music library
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check text-success me-2"></i>
-                            Basic song discovery
-                        </li>
-                        <li class="mb-2 text-secondary">
-                            <i class="fas fa-times text-danger me-2"></i>
-                            No advanced recommendations
-                        </li>
-                        <li class="mb-2 text-secondary">
-                            <i class="fas fa-times text-danger me-2"></i>
-                            No dynamic playlists
-                        </li>
-                    </ul>
-                </div>
-                {% if is_premium %}
-                <div class="card-footer bg-transparent border-top">
-                    <button class="btn btn-outline-secondary w-100" disabled>
-                        <i class="fas fa-star me-1"></i>Your Current Plan
-                    </button>
-                </div>
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h5 class="mb-3">Current Status</h5>
+            {% if is_premium %}
+            <div class="alert alert-success mb-0">
+                <strong>Premium is active.</strong>
+                {% if current_plan %}
+                Current plan: <strong>{{ current_plan.name }}</strong> ({{ current_plan.tier|title }}).
+                {% endif %}
+                {% if subscription.expiry_date %}
+                Valid until {{ subscription.expiry_date|date:"M d, Y" }}.
                 {% endif %}
             </div>
+            <div class="mt-3 d-flex flex-wrap gap-2">
+                <form method="post" action="{% url 'cancel_subscription' %}" data-loading-text="Cancelling subscription...">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Cancel your current subscription and move back to free plan?')">
+                        <i class="fas fa-times me-1"></i>Cancel Subscription
+                    </button>
+                </form>
+                <small class="text-secondary align-self-center">You can subscribe again anytime from the plans below.</small>
+            </div>
+            {% else %}
+            <div class="alert alert-secondary mb-0">
+                <strong>Free account active.</strong> Upgrade to unlock advanced recommendations and premium playback features.
+                {% if current_plan %}
+                Current plan: <strong>{{ current_plan.name }}</strong>.
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
+    </div>
 
-        <!-- Premium Plan -->
-        <div class="col-lg-6">
-            <div class="card h-100" style="border: 2px solid var(--primary); overflow: hidden; position: relative;">
-                <div style="position: absolute; top: 0; right: 0; background: var(--gradient-purple); color: white; padding: 0.5rem 1rem; border-radius: 0 0 0 10px;">
-                    <small style="font-weight: 700;"><i class="fas fa-star me-1"></i>POPULAR</small>
-                </div>
-                <div class="card-header" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%); border-bottom: 2px solid var(--primary);">
-                    <h5 class="mb-0"><i class="fas fa-crown me-2" style="color: var(--primary);"></i>Premium Plan</h5>
-                </div>
-                <div class="card-body p-4">
-                    <div class="mb-4">
-                        <span style="font-size: 2.5rem; font-weight: 900; color: var(--primary);">$4.99</span>
-                        <span class="text-secondary">/month</span>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4 p-md-5">
+            {% if not has_profile_email %}
+            <div class="alert alert-warning" role="alert">
+                <i class="fas fa-envelope me-2"></i>
+                Add your email in profile to receive a receipt after payment.
+                <a href="{% url 'edit_profile' %}" class="alert-link ms-1">Edit profile</a>
+            </div>
+            {% endif %}
+
+            <div class="row g-4">
+                {% for plan in available_plans %}
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="border rounded-4 p-4 h-100 {% if current_plan and current_plan.id == plan.id %}border-success shadow-sm{% else %}bg-light{% endif %}">
+                        <div class="d-flex align-items-start justify-content-between gap-2 mb-3">
+                            <div>
+                                <h4 class="h5 mb-1">{{ plan.name }}</h4>
+                                <div class="text-secondary small">{{ plan.tier|title }} tier</div>
+                            </div>
+                            {% if current_plan and current_plan.id == plan.id %}
+                            <span class="badge bg-success">Current</span>
+                            {% elif plan.tier == 'free' %}
+                            <span class="badge bg-secondary">Free</span>
+                            {% else %}
+                            <span class="badge bg-primary">Active</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="text-secondary small">Price</div>
+                            <div class="display-6 fw-bold mb-1">NPR {{ plan.price }}</div>
+                            <div class="text-secondary">for {{ plan.duration_days }} days</div>
+                        </div>
+
+                        <ul class="list-unstyled mb-4">
+                            {% if plan.get_features_list %}
+                            {% for feature in plan.get_features_list %}
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>{{ feature }}</li>
+                            {% endfor %}
+                            {% else %}
+                            <li class="mb-2"><i class="fas fa-check text-success me-2"></i>Plan benefits configured by admin</li>
+                            {% endif %}
+                        </ul>
+
+                        {% if current_plan and current_plan.id == plan.id %}
+                        <button class="btn btn-outline-secondary w-100" disabled>
+                            <i class="fas fa-check me-1"></i>Currently Selected
+                        </button>
+                        {% elif plan.tier == 'free' %}
+                        <button class="btn btn-outline-secondary w-100" disabled>
+                            <i class="fas fa-info-circle me-1"></i>No Payment Needed
+                        </button>
+                        {% else %}
+                        <form method="post" action="{% url 'subscribe_premium' %}" data-no-loading="true" class="subscription-khalti-form" data-plan-name="{{ plan.name }}">
+                            {% csrf_token %}
+                            <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-credit-card me-1"></i>Choose Plan
+                            </button>
+                        </form>
+                        {% endif %}
                     </div>
-                    
-                    <h6 class="mb-3">Features:</h6>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="fas fa-check" style="color: var(--primary); font-weight: bold;" me-2></i>
-                            <strong>Unlimited songs</strong> per playlist
-                        </li>
-                        <li class="mb-2">
-                            <i class="fas fa-check" style="color: var(--primary); font-weight: bold;" me-2></i>
-                            Everything in Free
-                        </li>
-                        <li class="mb-2" style="color: var(--primary); font-weight: 600;">
-                            <i class="fas fa-check" style="color: var(--primary); font-weight: bold;" me-2></i>
-                            Dynamic Playlists (AI-powered)
-                        </li>
-                        <li class="mb-2" style="color: var(--primary); font-weight: 600;">
-                            <i class="fas fa-check" style="color: var(--primary); font-weight: bold;" me-2></i>
-                            Advanced Recommendations
-                        </li>
-                        <li class="mb-2" style="color: var(--primary); font-weight: 600;">
-                            <i class="fas fa-check" style="color: var(--primary); font-weight: bold;" me-2></i>
-                            Collaborative Filtering
-                        </li>
-                        <li class="mb-2" style="color: var(--primary); font-weight: 600;">
-                            <i class="fas fa-check" style="color: var(--primary); font-weight: bold;" me-2></i>
-                            Content-Based Analysis
-                        </li>
-                    </ul>
                 </div>
-                <div class="card-footer bg-transparent border-top">
-                    {% if is_premium %}
-                    <form method="post" action="{% url 'cancel_subscription' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Are you sure? You will lose premium access.')">
-                            <i class="fas fa-times me-1"></i>Cancel Premium
-                        </button>
-                    </form>
-                    {% else %}
-                    <form method="post" action="{% url 'subscribe_premium' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="duration" value="30">
-                        <button type="submit" class="btn btn-primary w-100" style="background: var(--gradient-purple); border: none;">
-                            <i class="fas fa-credit-card me-1"></i>Pay With Khalti
-                        </button>
-                    </form>
-                    <p class="small text-muted mt-3 mb-0">
-                        Khalti mode: <strong>{{ khalti_mode|upper }}</strong>. Make sure your Khalti keys are configured in environment variables.
-                    </p>
-                    {% endif %}
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info mb-0">No active subscription plans are available right now.</div>
                 </div>
+                {% endfor %}
             </div>
         </div>
     </div>
 
     {% if khalti_public_key %}
-    <div class="alert alert-info mb-4" role="alert" style="border-radius: 14px;">
-        <i class="fas fa-flask me-2"></i>
-        Khalti {{ khalti_mode|upper }} mode is enabled for this app.
+    <div class="alert alert-info" role="alert">
+        <i class="fas fa-flask me-2"></i>Khalti {{ khalti_mode|upper }} mode is enabled.
     </div>
     {% else %}
-    <div class="alert alert-warning mb-4" role="alert" style="border-radius: 14px;">
-        <i class="fas fa-triangle-exclamation me-2"></i>
-        Khalti keys are not configured yet. Add <strong>KHALTI_PUBLIC_KEY</strong> and <strong>KHALTI_SECRET_KEY</strong>.
+    <div class="alert alert-warning" role="alert">
+        <i class="fas fa-triangle-exclamation me-2"></i>Khalti keys are not configured yet.
     </div>
     {% endif %}
-
-    <!-- Benefits Section -->
-    <div class="row mt-5">
-        <div class="col-lg-4">
-            <div class="text-center p-4">
-                <div style="width: 80px; height: 80px; background: var(--gradient-purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);">
-                    <i class="fas fa-music fa-2x" style="color: white;"></i>
-                </div>
-                <h6 class="mb-2">Unlimited Playlists</h6>
-                <p class="text-secondary small">Create and manage unlimited playlists with unlimited songs in each</p>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="text-center p-4">
-                <div style="width: 80px; height: 80px; background: var(--gradient-purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);">
-                    <i class="fas fa-brain fa-2x" style="color: white;"></i>
-                </div>
-                <h6 class="mb-2">Smart Recommendations</h6>
-                <p class="text-secondary small">Get personalized song recommendations powered by advanced AI algorithms</p>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="text-center p-4">
-                <div style="width: 80px; height: 80px; background: var(--gradient-purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);">
-                    <i class="fas fa-wand-magic-sparkles fa-2x" style="color: white;"></i>
-                </div>
-                <h6 class="mb-2">Dynamic Content</h6>
-                <p class="text-secondary small">Discover new music through dynamic playlists curated just for you</p>
-            </div>
-        </div>
-    </div>
 </div>
 
-<style>
-    .card-header {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%);
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const checkoutForms = document.querySelectorAll('.subscription-khalti-form');
+    const loadingAlert = document.getElementById('khaltiLoadingAlert');
+
+    if (!checkoutForms.length) {
+        return;
     }
-</style>
+
+    checkoutForms.forEach((form) => {
+        form.addEventListener('submit', () => {
+            const selectedPlanName = form.dataset.planName || 'selected plan';
+
+            if (loadingAlert) {
+                loadingAlert.classList.remove('d-none');
+                loadingAlert.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Connecting to Khalti sandbox for ' + selectedPlanName + '. Please wait...';
+            }
+
+            if (typeof window.showLoadingOverlay === 'function') {
+                window.showLoadingOverlay('Connecting to Khalti sandbox...');
+            }
+
+            checkoutForms.forEach((eachForm) => {
+                const eachButton = eachForm.querySelector('button[type="submit"]');
+                if (eachButton) {
+                    eachButton.disabled = true;
+                }
+            });
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Connecting...';
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -4,23 +4,25 @@
 {% block title %}{{ algorithm }} - Finder{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-5">
-    <!-- Header Section -->
+<div class="container-fluid py-5 recommendations-light">
+    <!-- Header Section with Neon Glow -->
     <div class="row mb-5">
         <div class="col-lg-8">
-            <h1 class="display-5 fw-bold mb-3">
-                <i class="fas fa-magic text-primary"></i> {{ algorithm }}
+            <h1 class="display-5 fw-bold mb-3" style="text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);">
+                <i class="fas fa-magic" style="background: var(--gradient-music); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 15px rgba(255, 107, 107, 0.6));"></i> {{ algorithm }}
             </h1>
-            <p class="lead text-secondary">{{ description }}</p>
-            
-            <!-- Algorithm Info Card -->
-            <div class="alert alert-info alert-dismissible fade show" role="alert">
-                <i class="fas fa-info-circle"></i> 
+            <p class="lead" style="color: var(--text-secondary);">{{ description }}</p>
+
+            <!-- Algorithm Info Card with Neon Border -->
+            <div class="alert alert-dismissible fade show" role="alert" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border: 2px solid rgba(99, 102, 241, 0.4); border-radius: 20px; color: var(--text-primary); box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);">
+                <i class="fas fa-info-circle" style="color: #4ECDC4;"></i>
                 <strong>How it works:</strong>
                 {% if recommendation_type == 'collaborative' %}
                     This system analyzes users with similar music tastes and recommends songs they've added to their playlists.
                 {% elif recommendation_type == 'content' %}
                     This system analyzes the genres and artists in your playlists and recommends similar songs.
+                {% elif recommendation_type == 'hybrid' %}
+                    This system blends collaborative filtering, content-based filtering, and contextual rules to recommend songs directly for you.
                 {% endif %}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
@@ -28,10 +30,11 @@
         
         <!-- Quick Links -->
         <div class="col-lg-4">
-            <div class="card border-0 shadow-sm">
+            {% if recommendation_type != 'hybrid' %}
+            <div class="card border-0" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(236, 72, 153, 0.12) 100%); border: 2px solid rgba(99, 102, 241, 0.3) !important; box-shadow: 0 0 40px rgba(99, 102, 241, 0.3);">
                 <div class="card-body">
-                    <h6 class="card-title mb-3">
-                        <i class="fas fa-clone text-primary"></i> Try Other Methods
+                    <h6 class="card-title mb-3" style="color: var(--text-primary);">
+                        <i class="fas fa-clone" style="background: var(--gradient-music); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i> Try Other Methods
                     </h6>
                     <div class="d-grid gap-2">
                         {% if recommendation_type != 'collaborative' %}
@@ -39,36 +42,36 @@
                             <i class="fas fa-users"></i> Collaborative Filtering
                         </a>
                         {% endif %}
-                        
+
                         {% if recommendation_type != 'content' %}
                         <a href="{% url 'content_recommendations' %}" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-tags"></i> Content-Based
                         </a>
                         {% endif %}
-                        
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
 
     <!-- Similar Users (only for collaborative) -->
-    {% if similar_users %}
+    {% if recommendation_type == 'collaborative' and similar_users %}
     <div class="row mb-5">
         <div class="col-12">
-            <h5 class="mb-3">
-                <i class="fas fa-users"></i> Users with Similar Taste
+            <h5 class="mb-3" style="color: var(--text-primary);">
+                <i class="fas fa-users" style="color: #4ECDC4;"></i> Users with Similar Taste
             </h5>
             <div class="row row-cols-2 row-cols-md-3 row-cols-lg-5 g-3">
                 {% for user in similar_users %}
                 <div class="col">
-                    <div class="card text-center border-0 shadow-sm">
+                    <div class="card text-center border-0" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);">
                         <div class="card-body">
-                            <div class="avatar-placeholder mb-2">
-                                <i class="fas fa-user-circle fa-3x text-primary"></i>
+                            <div class="avatar-placeholder mb-2" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%); box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);">
+                                <i class="fas fa-user-circle fa-3x" style="background: var(--gradient-music); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                             </div>
-                            <h6 class="card-title">{{ user.username }}</h6>
-                            <small class="text-muted">Similar user</small>
+                            <h6 class="card-title" style="color: var(--text-primary);">{{ user.username }}</h6>
+                            <small style="color: var(--text-secondary);">Similar user</small>
                         </div>
                     </div>
                 </div>
@@ -78,42 +81,52 @@
     </div>
     {% endif %}
 
-    <!-- Recommended Songs -->
+    <!-- Recommended Songs with Neon Cards -->
     <div class="row mb-5">
         <div class="col-12">
-            <h5 class="mb-4">
-                <i class="fas fa-music"></i> Recommended Songs 
-                <span class="badge bg-primary">{{ songs.count }}</span>
+            <h5 class="mb-4" style="color: var(--text-primary);">
+                <i class="fas fa-music" style="color: #4ECDC4;"></i> Recommended Songs
+                <span class="badge" style="background: var(--gradient-purple); box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);">{{ explained_songs|length }}</span>
             </h5>
 
-            {% if songs %}
+            {% if explained_songs %}
                 <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
-                    {% for song in songs %}
+                    {% for item in explained_songs %}
+                    {% with song=item.song %}
                     <div class="col">
-                        <div class="card h-100 border-0 shadow-sm hover-lift">
-                            <!-- Song Cover -->
+                        <div class="card h-100 border-0 song-card" style="background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%); box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);">
+                            <!-- Song Cover with Gradient Overlay -->
                             <div class="position-relative overflow-hidden" style="height: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                                 {% if song.get_cover_image %}
                                     <img src="{{ song.get_cover_image }}" alt="{{ song.title }}" class="card-img-top h-100 object-fit-cover">
                                 {% else %}
                                     <div class="d-flex align-items-center justify-content-center h-100">
-                                        <i class="fas fa-compact-disc fa-4x text-white opacity-50"></i>
+                                        <i class="fas fa-compact-disc fa-4x" style="color: rgba(255, 255, 255, 0.5);"></i>
                                     </div>
                                 {% endif %}
-                                
-                                <!-- Genre Badge -->
+
+                                <!-- Genre Badge with Neon Glow -->
                                 {% if song.get_genre_display %}
-                                <span class="position-absolute top-0 end-0 badge bg-primary m-2">
+                                <span class="position-absolute top-0 end-0 badge m-2" style="background: var(--gradient-purple); box-shadow: 0 0 15px rgba(99, 102, 241, 0.6);">
                                     {{ song.get_genre_display }}
                                 </span>
                                 {% endif %}
                             </div>
 
                             <div class="card-body">
-                                <h6 class="card-title">{{ song.title }}</h6>
-                                <p class="card-text text-secondary small">
+                                <h6 class="card-title" style="color: var(--text-primary);">{{ song.title }}</h6>
+                                <p class="card-text small" style="color: var(--text-secondary);">
                                     <i class="fas fa-user"></i> {{ song.artist }}
                                 </p>
+                                <div class="small mb-2" style="color: #4ECDC4;">
+                                    <i class="fas fa-lightbulb me-1"></i>{{ item.reason }}
+                                </div>
+                                <span class="badge mb-2" style="background: linear-gradient(135deg, #4ECDC4 0%, #45B7D1 100%); box-shadow: 0 0 15px rgba(78, 205, 196, 0.5);">Confidence: {{ item.confidence }}</span>
+                                {% if recommendation_type == 'hybrid' and item.scores %}
+                                <div class="small mb-2" style="color: var(--text-secondary);">
+                                    Total {{ item.scores.total }} | Collab {{ item.scores.collaborative }} | Content {{ item.scores.content }} | Context {{ item.scores.contextual }}
+                                </div>
+                                {% endif %}
 
                                 <!-- Audio Player -->
                                 {% if song.get_audio_source %}
@@ -121,19 +134,33 @@
                                     <source src="{{ song.get_audio_source }}" type="audio/mpeg">
                                     Your browser does not support the audio element.
                                 </audio>
+                                <div class="d-flex gap-2 mb-2">
+                                    <button class="btn btn-sm btn-outline-primary w-50" type="button"
+                                            data-play-now-title="{{ song.title|escape }}"
+                                            data-play-now-artist="{{ song.artist|escape }}"
+                                            data-play-now-url="{{ song.get_audio_source|escape }}">
+                                        <i class="fas fa-play me-1"></i>Play
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-primary w-50" type="button"
+                                            data-queue-title="{{ song.title|escape }}"
+                                            data-queue-artist="{{ song.artist|escape }}"
+                                            data-queue-url="{{ song.get_audio_source|escape }}">
+                                        <i class="fas fa-list me-1"></i>Queue
+                                    </button>
+                                </div>
                                 {% endif %}
                             </div>
 
-                            <div class="card-footer bg-light border-0">
+                            <div class="card-footer border-0 song-card-footer" style="background: rgba(26, 26, 46, 0.5);">
                                 <div class="btn-group w-100" role="group">
                                     {% if user_playlists %}
                                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="fas fa-plus"></i> Add
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" style="width: 200px;">
+                                    <ul class="dropdown-menu rec-dropdown-menu" style="width: 200px; background: rgba(26, 26, 46, 0.98); border: 2px solid rgba(99, 102, 241, 0.3);">
                                         {% for playlist in user_playlists %}
                                         <li>
-                                            <a class="dropdown-item" href="{% url 'add_song_to_playlist' playlist.id song.id %}">
+                                            <a class="dropdown-item" href="{% url 'add_song_to_playlist' playlist.id song.id %}" style="color: var(--text-primary);">
                                                 {{ playlist.name }}
                                             </a>
                                         </li>
@@ -148,26 +175,37 @@
                             </div>
                         </div>
                     </div>
+                    {% endwith %}
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="alert alert-warning text-center py-5">
-                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                <div class="alert text-center py-5" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(236, 72, 153, 0.12) 100%); border: 2px solid rgba(99, 102, 241, 0.3); border-radius: 24px; color: var(--text-primary);">
+                    <i class="fas fa-inbox fa-3x mb-3" style="background: var(--gradient-music); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
                     <p class="mb-0">
                         <strong>No recommendations available yet.</strong><br>
-                        <small>Start adding songs to your playlists to get personalized recommendations!</small>
+                        <small>{{ empty_recommendation_message|default:'Start adding songs to your playlists to get personalized recommendations!' }}</small>
                     </p>
+                    {% if no_playlist_recommendation_guard %}
+                    <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+                        <a href="{% url 'discover_music' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-search me-1"></i>Search Music
+                        </a>
+                        <a href="{% url 'create_playlist' %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-1"></i>Create Playlist
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>
     </div>
 
-    <!-- Footer Info -->
+    <!-- Footer Info with Neon Glow -->
     <div class="row">
         <div class="col-12">
-            <div class="card border-0 bg-light">
-                <div class="card-body text-center text-muted small">
-                    <i class="fas fa-lightbulb"></i> 
+            <div class="card border-0" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%); border: 2px solid rgba(99, 102, 241, 0.2); box-shadow: 0 0 30px rgba(99, 102, 241, 0.2);">
+                <div class="card-body text-center small" style="color: var(--text-secondary);">
+                    <i class="fas fa-lightbulb" style="color: #4ECDC4;"></i>
                     Recommendations are personalized based on your playlist activity. The more playlists you create and songs you add, the better our recommendations become!
                 </div>
             </div>
@@ -176,21 +214,51 @@
 </div>
 
 <style>
+    .recommendations-light .song-card {
+        background: #ffffff !important;
+        border: 1px solid #dbe4f3 !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    .recommendations-light .song-card .card-title,
+    .recommendations-light .song-card .card-text,
+    .recommendations-light .song-card .small {
+        color: #1f2937 !important;
+    }
+
+    .recommendations-light .song-card-footer {
+        background: #f8fbff !important;
+        border-top: 1px solid #e2e8f0 !important;
+    }
+
+    .recommendations-light .rec-dropdown-menu {
+        background: #ffffff !important;
+        border: 1px solid #dbe4f3 !important;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+    }
+
+    .recommendations-light .rec-dropdown-menu .dropdown-item {
+        color: #1f2937 !important;
+    }
+
+    .recommendations-light .rec-dropdown-menu .dropdown-item:hover {
+        background: #eef4ff;
+    }
+
     .hover-lift {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     .hover-lift:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 60px rgba(99, 102, 241, 0.25) !important;
+        transform: translateY(-12px) scale(1.03);
+        box-shadow: 0 25px 70px rgba(99, 102, 241, 0.4), 0 0 50px rgba(236, 72, 153, 0.3) !important;
     }
-    
+
     .avatar-placeholder {
         width: 80px;
         height: 80px;
         margin: 0 auto;
         border-radius: 50%;
-        background: rgba(99, 102, 241, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;

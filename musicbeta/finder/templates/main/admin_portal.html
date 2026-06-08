@@ -1,0 +1,1282 @@
+{% extends 'main/base.html' %}
+{% block title %}Operations Admin - Finder{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --ops-primary: #1d4ed8;
+        --ops-secondary: #0ea5e9;
+        --ops-accent: #14b8a6;
+        --ops-danger: #dc2626;
+        --ops-warning: #d97706;
+        --ops-success: #059669;
+        --ops-surface: #ffffff;
+        --ops-bg: #f3f6fc;
+        --ops-border: #dbe4ff;
+        --ops-text: #0f172a;
+        --ops-muted: #475569;
+        --ops-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
+    }
+
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation-duration: 0.25s;
+        animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    .ops-admin-page {
+        min-height: 100vh;
+        background:
+            radial-gradient(circle at 5% 5%, rgba(29, 78, 216, 0.08), transparent 26%),
+            radial-gradient(circle at 95% 15%, rgba(20, 184, 166, 0.08), transparent 22%),
+            linear-gradient(135deg, #f8fbff 0%, #eef4ff 40%, #f2fbff 100%);
+        color: var(--ops-text);
+        padding: 1.5rem 0;
+    }
+
+    .ops-shell {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 1rem;
+    }
+
+    .ops-sidebar {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--ops-border);
+        border-radius: 18px;
+        box-shadow: var(--ops-shadow);
+        backdrop-filter: blur(14px);
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        min-height: calc(100vh - 3rem);
+        position: sticky;
+        top: 1rem;
+    }
+
+    .ops-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        border-bottom: 1px solid var(--ops-border);
+        padding: 0.25rem 0 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .ops-brand-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--ops-primary), var(--ops-secondary));
+        color: #fff;
+    }
+
+    .ops-nav {
+        display: grid;
+        gap: 0.45rem;
+    }
+
+    .ops-nav-btn {
+        border: 1px solid transparent;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        color: var(--ops-muted);
+        font-weight: 700;
+        text-align: left;
+        padding: 0.72rem 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.2s ease;
+    }
+
+    .ops-nav-btn:hover {
+        border-color: var(--ops-border);
+        background: #f8fbff;
+        color: var(--ops-text);
+    }
+
+    .ops-nav-btn.active {
+        background: linear-gradient(135deg, rgba(29, 78, 216, 0.12), rgba(14, 165, 233, 0.1));
+        border-color: rgba(29, 78, 216, 0.32);
+        color: var(--ops-text);
+    }
+
+    .ops-nav-pill {
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.16rem 0.55rem;
+        background: rgba(29, 78, 216, 0.1);
+        color: var(--ops-primary);
+    }
+
+    .ops-sidebar-footer {
+        margin-top: auto;
+        border-top: 1px solid var(--ops-border);
+        padding-top: 1rem;
+    }
+
+    .ops-role-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.22rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        background: rgba(14, 165, 233, 0.12);
+        color: #0369a1;
+        border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+
+    .ops-logout-btn {
+        width: 100%;
+        margin-top: 0.9rem;
+        border: 1px solid rgba(220, 38, 38, 0.22);
+        color: var(--ops-danger);
+        background: rgba(220, 38, 38, 0.06);
+        border-radius: 12px;
+        padding: 0.65rem 0.8rem;
+        font-weight: 700;
+    }
+
+    .ops-main {
+        min-width: 0;
+    }
+
+    .ops-topbar,
+    .ops-panel {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--ops-border);
+        border-radius: 18px;
+        box-shadow: var(--ops-shadow);
+        backdrop-filter: blur(14px);
+    }
+
+    .ops-topbar {
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .ops-action-btn {
+        border: 1px solid var(--ops-border);
+        background: #ffffff;
+        color: var(--ops-text);
+        border-radius: 12px;
+        padding: 0.56rem 0.86rem;
+        font-weight: 700;
+    }
+
+    .ops-action-btn.primary {
+        border-color: rgba(29, 78, 216, 0.35);
+        color: #1d4ed8;
+        background: rgba(29, 78, 216, 0.06);
+    }
+
+    .ops-content-section {
+        display: none;
+    }
+
+    .ops-content-section.active {
+        display: block;
+    }
+
+    .ops-panel {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .ops-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.85rem;
+    }
+
+    .ops-stat {
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 0.8rem;
+        background: #fff;
+    }
+
+    .ops-stat-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.4rem;
+    }
+
+    .ops-stat-value {
+        font-size: 1.55rem;
+        font-weight: 800;
+    }
+
+    .ops-sparkline {
+        width: 100%;
+        height: 42px;
+        margin-top: 0.3rem;
+    }
+
+    .ops-table-wrap {
+        overflow: auto;
+        border: 1px solid #e8eefb;
+        border-radius: 12px;
+    }
+
+    .ops-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+    }
+
+    .ops-table th,
+    .ops-table td {
+        padding: 0.7rem;
+        border-bottom: 1px solid #eef2ff;
+        vertical-align: top;
+    }
+
+    .ops-table th {
+        background: #f8fbff;
+        color: #334155;
+        font-size: 0.76rem;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+
+    .ops-badge {
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 0.18rem 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    .ops-badge.success { background: rgba(5, 150, 105, 0.12); color: #065f46; }
+    .ops-badge.warning { background: rgba(217, 119, 6, 0.12); color: #9a3412; }
+    .ops-badge.danger { background: rgba(220, 38, 38, 0.12); color: #991b1b; }
+    .ops-badge.info { background: rgba(14, 165, 233, 0.12); color: #075985; }
+
+    .ops-inline-form {
+        display: inline;
+    }
+
+    .ops-mini-btn {
+        border: 1px solid #dbeafe;
+        background: #fff;
+        color: #1d4ed8;
+        border-radius: 10px;
+        padding: 0.25rem 0.48rem;
+        font-size: 0.76rem;
+        font-weight: 700;
+    }
+
+    .ops-mini-btn.warn {
+        color: #9a3412;
+        border-color: #fed7aa;
+    }
+
+    .ops-mini-btn.danger {
+        color: #b91c1c;
+        border-color: #fecaca;
+    }
+
+    .ops-row-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        justify-content: flex-end;
+    }
+
+    .ops-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0.65rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .ops-filter-grid input,
+    .ops-filter-grid select {
+        width: 100%;
+        border: 1px solid #cdd9f5;
+        border-radius: 10px;
+        padding: 0.56rem 0.62rem;
+        background: #fff;
+        color: var(--ops-text);
+    }
+
+    .ops-field-label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #5b6b87;
+        margin-bottom: 0.3rem;
+    }
+
+    .ops-field-action {
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .ops-audit-list {
+        display: grid;
+        gap: 0.55rem;
+    }
+
+    .ops-audit-item {
+        display: flex;
+        gap: 0.7rem;
+        align-items: flex-start;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        border-radius: 12px;
+        padding: 0.65rem;
+    }
+
+    .ops-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        margin-top: 0.38rem;
+        flex: 0 0 9px;
+    }
+
+    .ops-dot.success { background: #059669; }
+    .ops-dot.danger { background: #dc2626; }
+    .ops-dot.warning { background: #d97706; }
+    .ops-dot.info { background: #0284c7; }
+
+    .ops-muted { color: var(--ops-muted); }
+
+    @media (max-width: 1100px) {
+        .ops-shell {
+            grid-template-columns: 1fr;
+        }
+
+        .ops-sidebar {
+            position: static;
+            min-height: auto;
+        }
+    }
+
+    @media (max-width: 800px) {
+        .ops-filter-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+</style>
+
+<div class="ops-admin-page">
+    <div class="container-fluid px-3 px-md-4">
+        <div class="ops-shell">
+            <aside class="ops-sidebar">
+                <div class="ops-brand">
+                    <div class="ops-brand-icon"><i class="fas fa-shield-halved"></i></div>
+                    <div>
+                        <div class="fw-bold">Finder Ops</div>
+                        <small class="ops-muted">Operations Console</small>
+                    </div>
+                </div>
+
+                <nav class="ops-nav" id="opsSidebarNav">
+                    <button type="button" class="ops-nav-btn" data-tab="analytics">
+                        <span><i class="fas fa-chart-line me-2"></i>Dashboard</span>
+                        <span class="ops-nav-pill">Live</span>
+                    </button>
+                    <button type="button" class="ops-nav-btn" data-tab="users">
+                        <span><i class="fas fa-users me-2"></i>Users</span>
+                        <span class="ops-nav-pill">{{ total_users }}</span>
+                    </button>
+                    <button type="button" class="ops-nav-btn" data-tab="plans">
+                        <span><i class="fas fa-layer-group me-2"></i>Plans</span>
+                        <span class="ops-nav-pill">{{ subscription_plans|length }}</span>
+                    </button>
+                    <button type="button" class="ops-nav-btn" data-tab="searches">
+                        <span><i class="fas fa-clock-rotate-left me-2"></i>Search History</span>
+                        <span class="ops-nav-pill">{{ recent_searches|length }}</span>
+                    </button>
+                    <button type="button" class="ops-nav-btn" data-tab="billing">
+                        <span><i class="fas fa-money-bill-wave me-2"></i>Billing</span>
+                        <span class="ops-nav-pill">{{ billing_total_count }}</span>
+                    </button>
+                    <button type="button" class="ops-nav-btn" data-tab="audit">
+                        <span><i class="fas fa-clipboard-list me-2"></i>Audit Log</span>
+                        <span class="ops-nav-pill">{{ recent_admin_actions|length }}</span>
+                    </button>
+                </nav>
+
+                <div class="ops-sidebar-footer">
+                    <div class="fw-semibold">{{ request.user.username|default:'Operations Admin' }}</div>
+                    <div class="ops-role-chip mt-1"><i class="fas fa-user-shield"></i> Ops Admin Session</div>
+                    <button type="button" class="ops-logout-btn" data-bs-toggle="modal" data-bs-target="#logoutConfirmModal">
+                        <i class="fas fa-right-from-bracket me-2"></i>Logout
+                    </button>
+                </div>
+            </aside>
+
+            <main class="ops-main">
+                <div class="ops-topbar">
+                    <div>
+                        <h1 class="h4 mb-1 fw-bold">Operations Admin Dashboard</h1>
+                        <small class="ops-muted">Last refresh: {% now "M d, Y H:i" %}</small>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="ops-action-btn" onclick="location.reload()"><i class="fas fa-rotate me-1"></i>Refresh</button>
+                        <button type="button" class="ops-action-btn primary" id="opsExportBtn"><i class="fas fa-file-export me-1"></i>Export Current Table</button>
+                    </div>
+                </div>
+
+                <section class="ops-content-section" id="ops-tab-analytics">
+                    <div class="ops-panel">
+                        <div class="ops-grid">
+                            <article class="ops-stat">
+                                <div class="ops-stat-head">
+                                    <small class="ops-muted fw-semibold">Total Users</small>
+                                    <span class="ops-badge info">+{{ new_users_last_7_days }} this week</span>
+                                </div>
+                                <div class="ops-stat-value">{{ total_users }}</div>
+                                <svg class="ops-sparkline" viewBox="0 0 120 40" preserveAspectRatio="none">
+                                    <polyline fill="none" stroke="#1d4ed8" stroke-width="2" points="0,30 20,28 35,25 50,27 70,20 90,16 120,10"></polyline>
+                                </svg>
+                            </article>
+
+                            <article class="ops-stat">
+                                <div class="ops-stat-head">
+                                    <small class="ops-muted fw-semibold">Premium Users</small>
+                                    <span class="ops-badge warning">{{ free_users }} free</span>
+                                </div>
+                                <div class="ops-stat-value">{{ premium_users }}</div>
+                                <svg class="ops-sparkline" viewBox="0 0 120 40" preserveAspectRatio="none">
+                                    <polyline fill="none" stroke="#d97706" stroke-width="2" points="0,32 18,31 36,30 54,28 72,24 90,20 120,15"></polyline>
+                                </svg>
+                            </article>
+
+                            <article class="ops-stat">
+                                <div class="ops-stat-head">
+                                    <small class="ops-muted fw-semibold">Library</small>
+                                    <span class="ops-badge success">{{ total_playlists }} playlists</span>
+                                </div>
+                                <div class="ops-stat-value">{{ total_songs }}</div>
+                                <svg class="ops-sparkline" viewBox="0 0 120 40" preserveAspectRatio="none">
+                                    <polyline fill="none" stroke="#059669" stroke-width="2" points="0,26 18,24 35,20 56,21 74,18 92,16 120,13"></polyline>
+                                </svg>
+                            </article>
+
+                            <article class="ops-stat">
+                                <div class="ops-stat-head">
+                                    <small class="ops-muted fw-semibold">Revenue (NPR)</small>
+                                    <span class="ops-badge danger">{{ billing_total_count }} tracked</span>
+                                </div>
+                                <div class="ops-stat-value">{{ revenue_this_month|floatformat:0 }}</div>
+                                <svg class="ops-sparkline" viewBox="0 0 120 40" preserveAspectRatio="none">
+                                    <polyline fill="none" stroke="#dc2626" stroke-width="2" points="0,35 20,34 35,33 55,28 74,22 92,19 120,12"></polyline>
+                                </svg>
+                            </article>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-xl-8">
+                            <div class="ops-panel">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h2 class="h6 fw-bold mb-0"><i class="fas fa-trophy me-2"></i>Most Active Users</h2>
+                                </div>
+                                <div class="ops-table-wrap">
+                                    <table class="ops-table" data-export-name="active_users">
+                                        <thead>
+                                            <tr>
+                                                <th>User</th>
+                                                <th>Email</th>
+                                                <th>Playlists</th>
+                                                <th>Songs</th>
+                                                <th class="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for user in top_users %}
+                                            <tr>
+                                                <td><strong>{{ user.username }}</strong></td>
+                                                <td class="ops-muted">{{ user.email|default:'No email' }}</td>
+                                                <td><span class="ops-badge success">{{ user.playlist_count }}</span></td>
+                                                <td><span class="ops-badge info">{{ user.song_count }}</span></td>
+                                                <td class="text-end">
+                                                    <button type="button" class="ops-mini-btn view-user-btn" data-user-id="{{ user.id }}"><i class="fas fa-eye me-1"></i>View</button>
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr><td colspan="5" class="text-center ops-muted py-4">No active user data yet</td></tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-4">
+                            <div class="ops-panel">
+                                <h2 class="h6 fw-bold mb-2"><i class="fas fa-clipboard-list me-2"></i>Recent Admin Actions</h2>
+                                <div class="ops-audit-list">
+                                    {% for action in recent_admin_actions|slice:":8" %}
+                                    <div class="ops-audit-item">
+                                        <span class="ops-dot {% if 'delete' in action.action %}danger{% elif 'retry' in action.action or 'failed' in action.action %}warning{% elif 'activate' in action.action or 'set_subscription' in action.action or 'mark_payment_paid' in action.action %}success{% else %}info{% endif %}"></span>
+                                        <div>
+                                            <div class="fw-semibold small">{{ action.action|title }}</div>
+                                            <div class="ops-muted small">{{ action.target_label|default:'-' }}</div>
+                                            <div class="ops-muted" style="font-size:0.72rem;">{{ action.created_at|timesince }} ago</div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <p class="ops-muted small mb-0">No admin actions logged yet.</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="ops-content-section" id="ops-tab-users">
+                    <div class="ops-panel">
+                        <h2 class="h6 fw-bold mb-3"><i class="fas fa-users me-2"></i>User Management</h2>
+                        <form method="get" class="ops-filter-grid">
+                            <input type="hidden" name="tab" value="users">
+                            <input type="text" name="user_search" value="{{ user_search }}" placeholder="Search username or email">
+                            <select name="user_status">
+                                <option value="all" {% if user_status_filter == 'all' %}selected{% endif %}>All status</option>
+                                <option value="active" {% if user_status_filter == 'active' %}selected{% endif %}>Active</option>
+                                <option value="inactive" {% if user_status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                            </select>
+                            <select name="user_tier">
+                                <option value="all" {% if user_tier_filter == 'all' %}selected{% endif %}>All tiers</option>
+                                <option value="free" {% if user_tier_filter == 'free' %}selected{% endif %}>Free</option>
+                                <option value="premium" {% if user_tier_filter == 'premium' %}selected{% endif %}>Premium</option>
+                            </select>
+                            <select name="user_sort">
+                                <option value="joined_desc" {% if user_sort == 'joined_desc' %}selected{% endif %}>Newest first</option>
+                                <option value="joined_asc" {% if user_sort == 'joined_asc' %}selected{% endif %}>Oldest first</option>
+                                <option value="username_asc" {% if user_sort == 'username_asc' %}selected{% endif %}>Username A-Z</option>
+                                <option value="playlists_desc" {% if user_sort == 'playlists_desc' %}selected{% endif %}>Most playlists</option>
+                            </select>
+                            <button type="submit" class="ops-action-btn primary">Apply</button>
+                        </form>
+
+                        <div class="ops-table-wrap">
+                            <table class="ops-table" data-export-name="users">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Status</th>
+                                        <th>Tier</th>
+                                        <th>Playlists</th>
+                                        <th>Joined</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in users_with_subscription %}
+                                    {% with user_item=entry.user sub=entry.subscription %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">{{ user_item.username }}</div>
+                                            <small class="ops-muted">{{ user_item.email|default:'No email' }}</small>
+                                        </td>
+                                        <td>
+                                            {% if user_item.is_active %}
+                                            <span class="ops-badge success">Active</span>
+                                            {% else %}
+                                            <span class="ops-badge danger">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if sub and sub.tier == 'premium' %}
+                                            <span class="ops-badge warning">Premium</span>
+                                            {% else %}
+                                            <span class="ops-badge info">Free</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ user_item.playlist_count }}</td>
+                                        <td class="ops-muted">{{ user_item.date_joined|date:"M d, Y" }}</td>
+                                        <td>
+                                            <div class="ops-row-actions">
+                                                <button type="button" class="ops-mini-btn view-user-btn" data-user-id="{{ user_item.id }}"><i class="fas fa-eye me-1"></i>View</button>
+                                                <form method="post" class="ops-inline-form d-flex gap-1 align-items-center">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="assign_subscription_plan">
+                                                    <input type="hidden" name="user_id" value="{{ user_item.id }}">
+                                                    <select name="plan_id" style="border:1px solid #cdd9f5;border-radius:10px;padding:0.24rem 0.35rem;font-size:0.76rem;max-width:140px;">
+                                                        {% for plan in subscription_plans %}
+                                                        <option value="{{ plan.id }}" {% if sub and sub.plan_id == plan.id %}selected{% endif %}>{{ plan.name }} ({{ plan.tier }})</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <button type="submit" class="ops-mini-btn"><i class="fas fa-crown me-1"></i>Set Plan</button>
+                                                </form>
+                                                <a href="?tab=billing&billing_user={{ user_item.username|urlencode }}" class="ops-mini-btn"><i class="fas fa-receipt me-1"></i>Billing</a>
+                                                <form method="post" class="ops-inline-form" onsubmit="return confirm('Delete this user permanently?');">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="delete_user">
+                                                    <input type="hidden" name="user_id" value="{{ user_item.id }}">
+                                                    <button type="submit" class="ops-mini-btn danger"><i class="fas fa-trash me-1"></i>Delete</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endwith %}
+                                    {% empty %}
+                                    <tr><td colspan="6" class="text-center ops-muted py-4">No users found.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {% if user_page_obj.paginator.num_pages > 1 %}
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <small class="ops-muted">Page {{ user_page_obj.number }} of {{ user_page_obj.paginator.num_pages }}</small>
+                            <div class="d-flex gap-2">
+                                {% if user_page_obj.has_previous %}
+                                <a class="ops-action-btn" href="?tab=users&user_search={{ user_search }}&user_status={{ user_status_filter }}&user_tier={{ user_tier_filter }}&user_sort={{ user_sort }}&user_page={{ user_page_obj.previous_page_number }}">Previous</a>
+                                {% endif %}
+                                {% if user_page_obj.has_next %}
+                                <a class="ops-action-btn" href="?tab=users&user_search={{ user_search }}&user_status={{ user_status_filter }}&user_tier={{ user_tier_filter }}&user_sort={{ user_sort }}&user_page={{ user_page_obj.next_page_number }}">Next</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <section class="ops-content-section" id="ops-tab-plans">
+                    <div class="ops-panel">
+                        <h2 class="h6 fw-bold mb-3"><i class="fas fa-layer-group me-2"></i>Subscription Plan Management</h2>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <form method="post" class="ops-panel" style="padding:0.9rem; margin-bottom:0; border:1px dashed #cdd9f5;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="create_subscription_plan">
+                                    <h3 class="h6 fw-semibold mb-2">Create New Plan</h3>
+                                    <div class="ops-filter-grid" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+                                        <div>
+                                            <label class="ops-field-label" for="plan-name">Plan Name</label>
+                                            <input id="plan-name" type="text" name="name" placeholder="Plan name" required>
+                                        </div>
+                                        <div>
+                                            <label class="ops-field-label" for="plan-tier">Tier</label>
+                                            <select id="plan-tier" name="tier" required>
+                                                <option value="">Tier...</option>
+                                                <option value="free">Free</option>
+                                                <option value="basic">Basic</option>
+                                                <option value="pro">Pro</option>
+                                                <option value="premium">Premium</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="ops-field-label" for="plan-price">Price</label>
+                                            <input id="plan-price" type="number" min="0" step="0.01" name="price" placeholder="Price" required>
+                                        </div>
+                                        <div>
+                                            <label class="ops-field-label" for="plan-duration-days">Duration (Days)</label>
+                                            <input id="plan-duration-days" type="number" min="1" name="duration_days" placeholder="Duration days" value="30" required>
+                                        </div>
+                                        <div>
+                                            <label class="ops-field-label" for="plan-max-playlists">Max Playlists</label>
+                                            <input id="plan-max-playlists" type="number" min="1" name="max_playlists" placeholder="Max playlists" value="3" required>
+                                        </div>
+                                        <div>
+                                            <label class="ops-field-label" for="plan-max-songs">Max Songs Per Playlist</label>
+                                            <input id="plan-max-songs" type="number" min="1" name="max_songs_per_playlist" placeholder="Max songs per playlist" value="5" required>
+                                        </div>
+                                        <div>
+                                            <label class="ops-field-label" for="plan-is-active">Status</label>
+                                            <select id="plan-is-active" name="is_active">
+                                                <option value="1" selected>Active</option>
+                                                <option value="0">Inactive</option>
+                                            </select>
+                                        </div>
+                                        <div class="ops-field-action">
+                                            <button type="submit" class="ops-action-btn primary w-100"><i class="fas fa-plus me-1"></i>Create Plan</button>
+                                        </div>
+                                    </div>
+                                    <div class="ops-filter-grid" style="grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top:0.35rem;">
+                                        <div>
+                                            <label class="ops-field-label" for="plan-ad-free">Ad Experience</label>
+                                            <select id="plan-ad-free" name="ad_free">
+                                                <option value="0" selected>Ads Enabled</option>
+                                                <option value="1">Ad Free</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="ops-field-label" for="plan-download-available">Downloads</label>
+                                            <select id="plan-download-available" name="download_available">
+                                                <option value="0" selected>No Downloads</option>
+                                                <option value="1">Download Enabled</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="ops-field-label" for="plan-offline-mode">Offline Mode</label>
+                                            <select id="plan-offline-mode" name="offline_mode">
+                                                <option value="0" selected>No Offline Mode</option>
+                                                <option value="1">Offline Mode Enabled</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="ops-field-label" for="plan-hd-audio">Audio Quality</label>
+                                            <select id="plan-hd-audio" name="hd_audio">
+                                                <option value="0" selected>Standard Audio</option>
+                                                <option value="1">HD Audio</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="row g-2 mt-1">
+                                        <div class="col-md-6">
+                                            <label class="ops-field-label" for="plan-description">Description</label>
+                                            <textarea id="plan-description" name="description" class="form-control" rows="2" placeholder="Description"></textarea>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="ops-field-label" for="plan-features">Features</label>
+                                            <textarea id="plan-features" name="features" class="form-control" rows="2" placeholder="Features (one per line)"></textarea>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <h3 class="h6 fw-semibold mb-2 mt-3">Existing Plans (Edit & Update)</h3>
+                        <p class="ops-muted mb-2" style="font-size:0.86rem;">Use this table to update already-created plans.</p>
+
+                        <div class="d-none" aria-hidden="true">
+                            {% for plan in subscription_plans %}
+                            <form method="post" id="plan-form-{{ plan.id }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="edit_subscription_plan">
+                                <input type="hidden" name="plan_id" value="{{ plan.id }}">
+                            </form>
+                            {% endfor %}
+                        </div>
+
+                        <div class="ops-table-wrap">
+                            <table class="ops-table" data-export-name="subscription_plans">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Tier</th>
+                                        <th>Price</th>
+                                        <th>Duration</th>
+                                        <th>Limits</th>
+                                        <th>Status</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for plan in subscription_plans %}
+                                    <tr>
+                                        <td>
+                                                <input type="text" name="name" value="{{ plan.name }}" form="plan-form-{{ plan.id }}" required>
+                                        </td>
+                                        <td>
+                                            <select name="tier" form="plan-form-{{ plan.id }}" aria-label="Tier for {{ plan.name }}">
+                                                <option value="free" {% if plan.tier == 'free' %}selected{% endif %}>Free</option>
+                                                <option value="basic" {% if plan.tier == 'basic' %}selected{% endif %}>Basic</option>
+                                                <option value="pro" {% if plan.tier == 'pro' %}selected{% endif %}>Pro</option>
+                                                <option value="premium" {% if plan.tier == 'premium' %}selected{% endif %}>Premium</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" min="0" step="0.01" name="price" value="{{ plan.price }}" form="plan-form-{{ plan.id }}" required>
+                                        </td>
+                                        <td>
+                                            <input type="number" min="1" name="duration_days" value="{{ plan.duration_days }}" form="plan-form-{{ plan.id }}" required>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-column gap-1">
+                                                <input type="number" min="1" name="max_playlists" value="{{ plan.max_playlists }}" form="plan-form-{{ plan.id }}" title="Max playlists" required>
+                                                <input type="number" min="1" name="max_songs_per_playlist" value="{{ plan.max_songs_per_playlist }}" form="plan-form-{{ plan.id }}" title="Max songs per playlist" required>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-column gap-1">
+                                                <select name="is_active" form="plan-form-{{ plan.id }}">
+                                                    <option value="1" {% if plan.is_active %}selected{% endif %}>Active</option>
+                                                    <option value="0" {% if not plan.is_active %}selected{% endif %}>Inactive</option>
+                                                </select>
+                                                <select name="ad_free" form="plan-form-{{ plan.id }}">
+                                                    <option value="1" {% if plan.ad_free %}selected{% endif %}>Ad Free</option>
+                                                    <option value="0" {% if not plan.ad_free %}selected{% endif %}>Ads On</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex flex-column gap-1" style="min-width:180px;">
+                                                <select name="download_available" form="plan-form-{{ plan.id }}">
+                                                    <option value="1" {% if plan.download_available %}selected{% endif %}>Downloads On</option>
+                                                    <option value="0" {% if not plan.download_available %}selected{% endif %}>Downloads Off</option>
+                                                </select>
+                                                <select name="offline_mode" form="plan-form-{{ plan.id }}">
+                                                    <option value="1" {% if plan.offline_mode %}selected{% endif %}>Offline On</option>
+                                                    <option value="0" {% if not plan.offline_mode %}selected{% endif %}>Offline Off</option>
+                                                </select>
+                                                <select name="hd_audio" form="plan-form-{{ plan.id }}">
+                                                    <option value="1" {% if plan.hd_audio %}selected{% endif %}>HD On</option>
+                                                    <option value="0" {% if not plan.hd_audio %}selected{% endif %}>HD Off</option>
+                                                </select>
+                                                <textarea name="description" rows="2" form="plan-form-{{ plan.id }}" placeholder="Description">{{ plan.description }}</textarea>
+                                                <textarea name="features" rows="2" form="plan-form-{{ plan.id }}" placeholder="Features (one per line)">{{ plan.features }}</textarea>
+                                                <button type="submit" class="ops-mini-btn" form="plan-form-{{ plan.id }}"><i class="fas fa-pen me-1"></i>Update</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="7" class="text-center ops-muted py-4">No subscription plans available.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="ops-content-section" id="ops-tab-searches">
+                    <div class="ops-panel">
+                        <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+                            <h2 class="h6 fw-bold mb-0"><i class="fas fa-clock-rotate-left me-2"></i>Search History</h2>
+                            <small class="ops-muted">Client-side filters</small>
+                        </div>
+
+                        <div class="ops-filter-grid" style="grid-template-columns: repeat(4, minmax(0, 1fr));">
+                            <input type="text" id="searchHistoryUserFilter" placeholder="Filter by username">
+                            <input type="text" id="searchHistoryQueryFilter" placeholder="Filter by query text">
+                            <input type="date" id="searchHistoryDateFrom">
+                            <button type="button" class="ops-action-btn" id="resetSearchHistoryFilters">Reset filters</button>
+                        </div>
+
+                        <div class="ops-table-wrap">
+                            <table class="ops-table" data-export-name="search_history" id="searchHistoryTable">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Query</th>
+                                        <th>Source</th>
+                                        <th>Genre</th>
+                                        <th>Results</th>
+                                        <th>When</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for search in recent_searches %}
+                                    <tr data-user="{{ search.user.username|lower }}" data-query="{{ search.query|lower }}" data-date="{{ search.searched_at|date:'Y-m-d' }}">
+                                        <td><strong>{{ search.user.username }}</strong></td>
+                                        <td>{{ search.query }}</td>
+                                        <td>{% if search.source_filter %}<span class="ops-badge info">{{ search.source_filter }}</span>{% else %}<span class="ops-muted">-</span>{% endif %}</td>
+                                        <td>{% if search.genre_filter %}<span class="ops-badge success">{{ search.genre_filter }}</span>{% else %}<span class="ops-muted">-</span>{% endif %}</td>
+                                        <td><span class="ops-badge warning">{{ search.results_count }}</span></td>
+                                        <td class="ops-muted">{{ search.searched_at|date:"M d, Y H:i" }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="6" class="text-center ops-muted py-4">No search history yet.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="ops-content-section" id="ops-tab-billing">
+                    <div class="ops-panel">
+                        <h2 class="h6 fw-bold mb-3"><i class="fas fa-money-bill-wave me-2"></i>Billing</h2>
+
+                        <form method="get" class="ops-filter-grid" style="grid-template-columns: repeat(5, minmax(0, 1fr));">
+                            <input type="hidden" name="tab" value="billing">
+                            <input type="text" name="billing_user" value="{{ billing_user_search }}" placeholder="Search user">
+                            <select name="billing_status">
+                                <option value="all" {% if billing_status_filter == 'all' %}selected{% endif %}>All status</option>
+                                <option value="pending" {% if billing_status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="completed" {% if billing_status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                                <option value="failed" {% if billing_status_filter == 'failed' %}selected{% endif %}>Failed</option>
+                            </select>
+                            <input type="date" name="billing_date_from" value="{{ billing_date_from }}" placeholder="From date">
+                            <input type="date" name="billing_date_to" value="{{ billing_date_to }}" placeholder="To date">
+                            <button type="submit" class="ops-action-btn primary">Filter</button>
+                        </form>
+
+                        <form method="post" id="bulkBillingForm" class="mb-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="bulk_payment_action">
+                            <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                                <select name="payment_bulk_action" id="bulkPaymentActionSelect" style="border:1px solid #cdd9f5;border-radius:10px;padding:0.45rem 0.6rem;">
+                                    <option value="">Bulk action...</option>
+                                    <option value="mark_paid">Mark selected as paid</option>
+                                    <option value="retry_lookup">Retry selected lookups</option>
+                                </select>
+                                <button type="submit" class="ops-action-btn" id="runBulkBillingBtn"><i class="fas fa-bolt me-1"></i>Run Bulk Action</button>
+                            </div>
+
+                            <div class="ops-table-wrap">
+                                <table class="ops-table" data-export-name="billing" id="billingTable">
+                                    <thead>
+                                        <tr>
+                                            <th><input type="checkbox" id="billingSelectAll"></th>
+                                            <th>User</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Provider</th>
+                                            <th>Reference</th>
+                                            <th>Date</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for payment in recent_payments %}
+                                        <tr>
+                                            <td><input type="checkbox" name="selected_payment_ids" value="{{ payment.id }}" class="billing-row-checkbox"></td>
+                                            <td>
+                                                <div class="fw-semibold">{{ payment.user.username }}</div>
+                                                <small class="ops-muted">{{ payment.user.email|default:'No email' }}</small>
+                                            </td>
+                                            <td><strong>NPR {{ payment.amount }}</strong></td>
+                                            <td>
+                                                {% if payment.status == 'completed' %}
+                                                <span class="ops-badge success">{{ payment.status }}</span>
+                                                {% elif payment.status == 'pending' %}
+                                                <span class="ops-badge warning">{{ payment.status }}</span>
+                                                {% else %}
+                                                <span class="ops-badge danger">{{ payment.status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ payment.provider|upper }}</td>
+                                            <td>
+                                                {% if payment.provider_reference %}
+                                                <span title="{{ payment.provider_reference }}">{{ payment.provider_reference|slice:":8" }}...{{ payment.provider_reference|slice:"-4:" }}</span>
+                                                <button type="button" class="ops-mini-btn copy-ref-btn" data-ref="{{ payment.provider_reference|escape }}"><i class="fas fa-copy"></i></button>
+                                                {% else %}
+                                                <span class="ops-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="ops-muted">{{ payment.created_at|date:"M d, Y" }}</td>
+                                            <td>
+                                                <div class="ops-row-actions">
+                                                    {% if payment.status != 'completed' %}
+                                                    <form method="post" class="ops-inline-form">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="mark_payment_paid">
+                                                        <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                                                        <button type="submit" class="ops-mini-btn"><i class="fas fa-check me-1"></i>Mark Paid</button>
+                                                    </form>
+                                                    {% endif %}
+                                                    <form method="post" class="ops-inline-form">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="action" value="retry_payment_webhook">
+                                                        <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                                                        <button type="submit" class="ops-mini-btn warn"><i class="fas fa-rotate me-1"></i>Retry</button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="8" class="text-center ops-muted py-4">No payment records found.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <section class="ops-content-section" id="ops-tab-audit">
+                    <div class="ops-panel">
+                        <h2 class="h6 fw-bold mb-3"><i class="fas fa-clipboard-list me-2"></i>Audit Log</h2>
+                        <div class="ops-table-wrap">
+                            <table class="ops-table" data-export-name="audit_log">
+                                <thead>
+                                    <tr>
+                                        <th>When</th>
+                                        <th>Actor</th>
+                                        <th>Action</th>
+                                        <th>Target</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for action in recent_admin_actions %}
+                                    <tr>
+                                        <td class="ops-muted">{{ action.created_at|date:"M d, Y H:i" }}</td>
+                                        <td>{{ action.actor.username|default:'System' }}</td>
+                                        <td><span class="ops-badge info">{{ action.action }}</span></td>
+                                        <td>{{ action.target_type }}: {{ action.target_label|default:'-' }}</td>
+                                        <td class="ops-muted">{{ action.details|default:'-' }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="5" class="text-center ops-muted py-4">No audit entries yet.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</div>
+
+{{ user_detail_payload|json_script:"admin-user-detail-data" }}
+
+<div class="modal fade" id="userDetailModal" tabindex="-1" aria-labelledby="userDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userDetailModalLabel">User Detail</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="userDetailModalBody"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logoutConfirmModalLabel">Confirm Logout</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">You are about to end the admin session. Continue?</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="logout">
+                    <button type="submit" class="btn btn-danger">Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const navButtons = Array.from(document.querySelectorAll('#opsSidebarNav .ops-nav-btn'));
+    const sections = Array.from(document.querySelectorAll('.ops-content-section'));
+    const initialTab = '{{ active_tab|default:"analytics" }}';
+
+    function setActiveTab(tabName, pushState) {
+        const normalized = ['analytics', 'users', 'plans', 'searches', 'billing', 'audit'].includes(tabName) ? tabName : 'analytics';
+
+        navButtons.forEach((btn) => {
+            btn.classList.toggle('active', btn.dataset.tab === normalized);
+        });
+
+        sections.forEach((section) => {
+            section.classList.toggle('active', section.id === 'ops-tab-' + normalized);
+        });
+
+        if (pushState) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', normalized);
+            window.history.replaceState({}, '', url.toString());
+        }
+    }
+
+    navButtons.forEach((btn) => {
+        btn.addEventListener('click', function() {
+            setActiveTab(this.dataset.tab, true);
+        });
+    });
+
+    setActiveTab(initialTab, false);
+
+    const copyButtons = document.querySelectorAll('.copy-ref-btn');
+    copyButtons.forEach((button) => {
+        button.addEventListener('click', async function() {
+            const ref = this.dataset.ref || '';
+            if (!ref) {
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(ref);
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-copy"></i>';
+                }, 1000);
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
+        });
+    });
+
+    const selectAll = document.getElementById('billingSelectAll');
+    const rowChecks = Array.from(document.querySelectorAll('.billing-row-checkbox'));
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            rowChecks.forEach((checkbox) => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+
+    rowChecks.forEach((checkbox) => {
+        checkbox.addEventListener('change', function() {
+            if (!selectAll) {
+                return;
+            }
+            const checkedCount = rowChecks.filter((c) => c.checked).length;
+            selectAll.checked = checkedCount === rowChecks.length;
+            selectAll.indeterminate = checkedCount > 0 && checkedCount < rowChecks.length;
+        });
+    });
+
+    const bulkForm = document.getElementById('bulkBillingForm');
+    if (bulkForm) {
+        bulkForm.addEventListener('submit', function(event) {
+            const action = document.getElementById('bulkPaymentActionSelect')?.value;
+            const selected = rowChecks.filter((c) => c.checked).length;
+            if (!action) {
+                event.preventDefault();
+                alert('Select a bulk action first.');
+                return;
+            }
+            if (selected === 0) {
+                event.preventDefault();
+                alert('Select at least one payment row first.');
+            }
+        });
+    }
+
+    const detailDataEl = document.getElementById('admin-user-detail-data');
+    let userDetails = [];
+    try {
+        const parsed = detailDataEl ? JSON.parse(detailDataEl.textContent || '[]') : [];
+        userDetails = Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        console.error('Unable to parse admin user detail payload.', error);
+        userDetails = [];
+    }
+    const userMap = new Map(userDetails.map((item) => [String(item.id), item]));
+    const detailModalEl = document.getElementById('userDetailModal');
+    const detailBody = document.getElementById('userDetailModalBody');
+
+    function renderList(items, emptyText, formatter) {
+        if (!items || items.length === 0) {
+            return '<p class="text-muted mb-0">' + emptyText + '</p>';
+        }
+        return '<ul class="mb-0">' + items.map(formatter).join('') + '</ul>';
+    }
+
+    document.querySelectorAll('.view-user-btn').forEach((button) => {
+        button.addEventListener('click', function() {
+            const user = userMap.get(String(this.dataset.userId));
+            if (!user || !detailBody || !detailModalEl) {
+                alert('User details are not available for this entry yet.');
+                return;
+            }
+
+            detailBody.innerHTML = '' +
+                '<div class="row g-3">' +
+                '<div class="col-md-6"><strong>Username:</strong> ' + user.username + '</div>' +
+                '<div class="col-md-6"><strong>Full Name:</strong> ' + user.full_name + '</div>' +
+                '<div class="col-md-6"><strong>Email:</strong> ' + user.email + '</div>' +
+                '<div class="col-md-6"><strong>Status:</strong> ' + (user.is_active ? 'Active' : 'Inactive') + '</div>' +
+                '<div class="col-md-6"><strong>Tier:</strong> ' + user.subscription_tier + '</div>' +
+                '<div class="col-md-6"><strong>Plan:</strong> ' + user.subscription_plan + '</div>' +
+                '<div class="col-md-6"><strong>Joined:</strong> ' + user.date_joined + '</div>' +
+                '<div class="col-md-6"><strong>Last Login:</strong> ' + user.last_login + '</div>' +
+                '<div class="col-12"><hr></div>' +
+                '<div class="col-12"><h6>Recent Playlists</h6>' + renderList(user.playlists, 'No playlists yet.', function(p) {
+                    return '<li><strong>' + p.name + '</strong> (' + p.song_count + ' songs) - ' + p.created_at + '</li>';
+                }) + '</div>' +
+                '<div class="col-12"><h6 class="mt-2">Recent Payments</h6>' + renderList(user.payments, 'No payments yet.', function(p) {
+                    return '<li>#' + p.id + ' - ' + p.status + ' - ' + p.currency + ' ' + p.amount + ' (' + p.created_at + ')</li>';
+                }) + '</div>' +
+                '</div>';
+
+            if (window.bootstrap && window.bootstrap.Modal) {
+                const detailModal = window.bootstrap.Modal.getOrCreateInstance(detailModalEl);
+                detailModal.show();
+            } else {
+                alert('Modal component is not available right now. Please refresh and try again.');
+            }
+        });
+    });
+
+    const userFilter = document.getElementById('searchHistoryUserFilter');
+    const queryFilter = document.getElementById('searchHistoryQueryFilter');
+    const dateFromFilter = document.getElementById('searchHistoryDateFrom');
+    const resetFiltersBtn = document.getElementById('resetSearchHistoryFilters');
+    const searchRows = Array.from(document.querySelectorAll('#searchHistoryTable tbody tr[data-user]'));
+
+    function applySearchHistoryFilters() {
+        const userValue = (userFilter?.value || '').toLowerCase().trim();
+        const queryValue = (queryFilter?.value || '').toLowerCase().trim();
+        const fromDate = dateFromFilter?.value || '';
+
+        searchRows.forEach((row) => {
+            const rowUser = row.dataset.user || '';
+            const rowQuery = row.dataset.query || '';
+            const rowDate = row.dataset.date || '';
+
+            const matchUser = !userValue || rowUser.includes(userValue);
+            const matchQuery = !queryValue || rowQuery.includes(queryValue);
+            const matchDate = !fromDate || rowDate >= fromDate;
+
+            row.style.display = (matchUser && matchQuery && matchDate) ? '' : 'none';
+        });
+    }
+
+    [userFilter, queryFilter, dateFromFilter].forEach((input) => {
+        if (input) {
+            input.addEventListener('input', applySearchHistoryFilters);
+            input.addEventListener('change', applySearchHistoryFilters);
+        }
+    });
+
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener('click', function() {
+            if (userFilter) userFilter.value = '';
+            if (queryFilter) queryFilter.value = '';
+            if (dateFromFilter) dateFromFilter.value = '';
+            applySearchHistoryFilters();
+        });
+    }
+
+    const exportBtn = document.getElementById('opsExportBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function() {
+            const activeSection = document.querySelector('.ops-content-section.active');
+            const table = activeSection ? activeSection.querySelector('table') : null;
+            if (!table) {
+                alert('No table available in the current section to export.');
+                return;
+            }
+
+            const rows = Array.from(table.querySelectorAll('tr'));
+            const csvLines = rows.map((row) => {
+                const cells = Array.from(row.querySelectorAll('th,td'));
+                return cells.map((cell) => {
+                    const text = (cell.innerText || '').replace(/\s+/g, ' ').trim().replace(/"/g, '""');
+                    return '"' + text + '"';
+                }).join(',');
+            });
+
+            const csvContent = csvLines.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const tableName = table.dataset.exportName || 'ops_export';
+            link.setAttribute('href', url);
+            link.setAttribute('download', tableName + '.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+    }
+})();
+</script>
+{% endblock %}

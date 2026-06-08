@@ -8,27 +8,56 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=20260417">
   </head>
   <body>
+    <!-- Animated Equalizer Background -->
+    <div class="equalizer-bg" aria-hidden="true">
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+      <div class="bar"></div>
+    </div>
+
     <nav class="navbar navbar-expand-lg sticky-top">
       <div class="container-fluid px-3 px-md-4">
         {% if request.user.is_authenticated %}
         <span class="navbar-brand" aria-current="page">
-          <i class="fas fa-music"></i>Finder
+          <i class="fas fa-headphones-alt"></i>Finder
         </span>
         {% else %}
         <a class="navbar-brand" href="{% url 'home' %}">
-          <i class="fas fa-music"></i>Finder
+          <i class="fas fa-headphones-alt"></i>Finder
         </a>
         {% endif %}
-        
+
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-        
+
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
+            {% if request.session.ops_admin_authenticated %}
+            {% if request.user.is_authenticated %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'dashboard' %}">
+                <i class="fas fa-home"></i> Dashboard
+              </a>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'admin_portal' %}">
+                <i class="fas fa-shield-alt"></i> Dashboard
+              </a>
+            </li>
+            {% endif %}
+            {% else %}
             {% if request.user.is_authenticated %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'dashboard' %}">
@@ -42,13 +71,13 @@
               </a>
             </li>
             {% endif %}
-            
+
             <li class="nav-item">
               <a class="nav-link" href="{% url 'discover_music' %}">
                 <i class="fas fa-compact-disc"></i> Discover
               </a>
             </li>
-            
+
             {% if request.user.is_authenticated %}
             <li class="nav-item dropdown ms-2">
               <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -56,7 +85,10 @@
               </a>
               <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                 <li><a class="dropdown-item" href="{% url 'dashboard' %}"><i class="fas fa-th-large"></i> My Dashboard</a></li>
+                <li><a class="dropdown-item" href="{% url 'edit_profile' %}"><i class="fas fa-user-edit"></i> Edit Profile</a></li>
                 <li><a class="dropdown-item" href="{% url 'subscription_page' %}"><i class="fas fa-crown"></i> Subscription</a></li>
+                <li><a class="dropdown-item" href="{% url 'personalized_recommendations_page' %}"><i class="fas fa-magic"></i> My Recommendations</a></li>
+                <li><a class="dropdown-item" href="{% url 'collab_recommendations' %}"><i class="fas fa-users"></i> Collaborative Recommendations</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
                   <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#logoutModal">
@@ -77,13 +109,88 @@
               </a>
             </li>
             {% endif %}
+            {% endif %}
           </ul>
         </div>
       </div>
     </nav>
     <div class="container-fluid">
+      {% if messages %}
+      <div class="pt-3 px-2 px-md-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
       {% block content %}
       {% endblock %}
+      </div>
+
+    {% if not request.session.ops_admin_authenticated %}
+    <footer class="site-footer mt-4">
+      <div class="container-fluid px-3 px-md-4 py-4">
+        <div class="row g-3 align-items-center">
+          <div class="col-12 col-md-6">
+            <div class="site-footer__brand">
+              <i class="fas fa-headphones-alt"></i>
+              <span>Finder</span>
+            </div>
+            <p class="site-footer__text mb-0">Discover music, build playlists, and enjoy personalized recommendations.</p>
+          </div>
+          <div class="col-12 col-md-6 text-md-end">
+            <div class="site-footer__links">
+              <a href="{% url 'home' %}">Home</a>
+              <a href="{% url 'discover_music' %}">Discover</a>
+              {% if request.user.is_authenticated %}
+              <a href="{% url 'dashboard' %}">Dashboard</a>
+              <a href="{% url 'subscription_page' %}">Subscription</a>
+              {% else %}
+              <a href="{% url 'login' %}">Login</a>
+              <a href="{% url 'sign_up' %}">Sign Up</a>
+              {% endif %}
+            </div>
+            <p class="site-footer__copy mb-0">&copy; {% now "Y" %} Finder. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+    {% endif %}
+
+    <div id="pageLoadingOverlay" class="page-loading-overlay" aria-hidden="true" hidden>
+      <div class="page-loading-card" role="status" aria-live="polite">
+        <div class="page-loading-spinner">
+          <i class="fas fa-music"></i>
+        </div>
+        <div class="page-loading-text">Loading, please wait...</div>
+      </div>
+    </div>
+
+      <div id="miniPlayer" class="mini-player" hidden>
+        <div class="mini-player__now">
+          <div class="mini-player__title" id="miniPlayerTitle">No track selected</div>
+          <div class="mini-player__meta" id="miniPlayerMeta">Use Play or Queue from your playlist songs.</div>
+        </div>
+        <div class="mini-player__controls">
+          <button class="btn btn-sm btn-outline-primary" id="miniPrevBtn" type="button" title="Previous" aria-label="Previous track">
+            <i class="fas fa-backward"></i>
+          </button>
+          <button class="btn btn-sm btn-light" id="miniPlayPauseBtn" type="button" title="Play/Pause" aria-label="Play or pause">
+            <i class="fas fa-play"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-primary" id="miniNextBtn" type="button" title="Next" aria-label="Next track">
+            <i class="fas fa-forward"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-primary" id="miniCloseBtn" type="button" title="Close" aria-label="Close mini player">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="mini-player__queue">
+          <span class="badge" id="miniQueueCount">Queue: 0</span>
+        </div>
+        <audio id="globalAudioPlayer" preload="none" aria-label="Global audio player"></audio>
       </div>
 
     

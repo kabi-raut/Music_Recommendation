@@ -16,7 +16,7 @@
                         <p class="text-secondary mb-0">Create your account and start discovering</p>
                     </div>
 
-                    <form method="post">
+                    <form method="post" data-loading-text="Creating your account...">
                         {% csrf_token %}
                         {% if form.non_field_errors %}
                         <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="background: rgba(245, 87, 108, 0.08); border: 1px solid rgba(245, 87, 108, 0.22); color: #c81e3a;">

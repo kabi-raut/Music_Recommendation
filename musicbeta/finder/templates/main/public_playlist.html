@@ -1,0 +1,77 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Shared Playlist - {{ playlist.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-3 px-md-4">
+    <div class="mb-4">
+        <h2 class="mb-2">
+            <i class="fas fa-share-alt me-2 text-primary"></i>{{ playlist.name }}
+        </h2>
+        <p class="text-secondary mb-0">Shared by {{ owner.username }}{% if playlist.description %} • {{ playlist.description }}{% endif %}</p>
+    </div>
+
+    <div class="alert alert-info" role="alert">
+        <i class="fas fa-globe me-2"></i>This is a public shared playlist.
+    </div>
+
+    {% if songs %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
+        {% for song in songs %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="position-relative" style="height: 180px; background-color: var(--tertiary-bg); overflow: hidden;">
+                    {% if song.get_cover_image %}
+                    <img src="{{ song.get_cover_image }}" class="w-100 h-100 object-fit-cover" alt="{{ song.title }}">
+                    {% else %}
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center">
+                        <i class="fas fa-music fa-5x text-secondary opacity-50"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title text-primary mb-1">{{ song.title }}</h6>
+                    <p class="card-text text-secondary small mb-2">{{ song.artist }}</p>
+                    <p class="card-text text-secondary small"><i class="fas fa-tag me-1"></i>{{ song.get_genre_display }}</p>
+                    {% if song.id in owner_liked_song_ids %}
+                    <div class="mb-2">
+                        <span class="badge text-bg-danger">
+                            <i class="fas fa-heart me-1"></i>Liked by this user
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% if song.get_audio_source %}
+                    <div class="mt-3">
+                        <audio controls class="w-100" preload="none" style="height: 32px; border-radius: 4px;">
+                            <source src="{{ song.get_audio_source }}" type="audio/mpeg">
+                        </audio>
+                        <div class="d-flex gap-2 mt-2">
+                            <button class="btn btn-sm btn-outline-secondary w-50" type="button"
+                                    data-play-now-title="{{ song.title|escape }}"
+                                    data-play-now-artist="{{ song.artist|escape }}"
+                                    data-play-now-url="{{ song.get_audio_source|escape }}">
+                                <i class="fas fa-play me-1"></i>Play
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary w-50" type="button"
+                                    data-queue-title="{{ song.title|escape }}"
+                                    data-queue-artist="{{ song.artist|escape }}"
+                                    data-queue-url="{{ song.get_audio_source|escape }}">
+                                <i class="fas fa-list me-1"></i>Queue
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card border-0 p-5 text-center">
+        <i class="fas fa-music fa-5x text-secondary opacity-50 mb-4"></i>
+        <h5 class="mb-2">This playlist has no songs yet</h5>
+        <p class="text-secondary mb-0">Check back later for updates.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

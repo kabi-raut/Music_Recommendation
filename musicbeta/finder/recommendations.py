@@ -1,43 +1,23 @@
-"""
-Recommendation System for Music Discovery
-Implements recommendation algorithms:
-1. Collaborative Filtering - Based on similar users' preferences
-2. Content-Based Filtering - Based on song features (genre, artist)
-"""
-
 from django.db.models import Q, Count, F, Case, When, IntegerField
 from .models import Song, Playlist, Genre, UserPreference
-from .music_api import OpenSourceMusicAPI
+from .music_api import iTunesAPI
 from django.contrib.auth.models import User
 from collections import Counter, defaultdict
 
 
 class CollaborativeFiltering:
-    """
-    Collaborative Filtering Algorithm
-    Recommends songs based on what similar users liked
-    """
-
-    # Shared-song overlap should matter more than shared genres.
     SHARED_SONG_WEIGHT = 5
     SHARED_GENRE_WEIGHT = 1
-    
     @staticmethod
     def get_similar_users(user, limit=5):
-        """
-        Find users with similar taste by analyzing their playlists
-        Similarity is based on shared songs and genres
-        """
+        
         user_playlists = Playlist.objects.filter(user=user)
         user_songs = Song.objects.filter(playlists__in=user_playlists).distinct()
         user_genres = Genre.objects.filter(song__in=user_songs).distinct()
-        
+
         if not user_songs.exists():
             return User.objects.none()
-        
-        # Find users who have songs or genres in common.
-        # Rank by actual overlap instead of total library size so large playlists
-        # do not dominate the results.
+
         similar_users = (
             User.objects.exclude(id=user.id)
             .annotate(
@@ -67,27 +47,23 @@ class CollaborativeFiltering:
             )
             .filter(Q(shared_song_count__gt=0) | Q(shared_genre_count__gt=0))
             .order_by('-similarity_score', '-shared_song_count', '-shared_genre_count', 'username')[:limit]
-        )
-        
+        )        
         return similar_users
     
     @staticmethod
-    def recommend_for_user(user, limit=10):
-        """
-        Recommend songs based on what similar users liked
-        Returns songs that the user hasn't added to any playlist yet
-        """
+    def recommend_for_user(user, limit=10, fallback_to_content=True):
+       
         # Get songs the user already has
-        user_songs = Song.objects.filter(
-            playlists__user=user
-        ).values_list('id', flat=True)
-        
+        user_songs = Song.objects.filter(playlists__user=user).values_list('id', flat=True)
+
         # Get similar users
         similar_users = list(CollaborativeFiltering.get_similar_users(user, limit=10))
-        
+
         if not similar_users:
-            return ContentBasedFiltering.recommend_by_preferred_genres(user, limit)
-        
+            if fallback_to_content:
+                return ContentBasedFiltering.recommend_by_preferred_genres(user, limit)
+            return Song.objects.none()
+
         user_song_ids = set(user_songs)
         song_scores = defaultdict(float)
         song_popularity = defaultdict(int)
@@ -105,7 +81,7 @@ class CollaborativeFiltering:
                 continue
 
             similar_user_songs = Song.objects.filter(
-                playlists__user=similar_user
+                playlists__user=similar_user,
             ).exclude(
                 id__in=user_song_ids
             ).distinct()
@@ -115,7 +91,9 @@ class CollaborativeFiltering:
                 song_popularity[song.id] += 1
 
         if not song_scores:
-            return ContentBasedFiltering.recommend_by_preferred_genres(user, limit)
+            if fallback_to_content:
+                return ContentBasedFiltering.recommend_by_preferred_genres(user, limit)
+            return Song.objects.none()
 
         ranked_song_ids = sorted(
             song_scores.keys(),
@@ -134,14 +112,18 @@ class CollaborativeFiltering:
 
 
 class ContentBasedFiltering:
-    """
-    Content-Based Filtering Algorithm
-    Recommends songs based on features like genre, artist, source, and duration
-    """
-    
+    MIN_ARTIST_PARTIAL_MATCH_LEN = 4
+    @staticmethod
+    def _build_ordered_queryset(song_ids):
+        if not song_ids:
+            return Song.objects.none()
+        order = Case(
+            *[When(id=song_id, then=position) for position, song_id in enumerate(song_ids)],
+            output_field=IntegerField(),
+        )
+        return Song.objects.filter(id__in=song_ids).order_by(order)
     @staticmethod
     def get_song_features(song):
-        """Extract comprehensive features from a song for comparison"""
         return {
             'genre': song.genre_id,
             'genre_name': song.get_genre_display(),
@@ -150,47 +132,36 @@ class ContentBasedFiltering:
             'source': song.source,
             'duration': song.duration or 0,
         }
-    
     @staticmethod
     def calculate_similarity(song1, song2):
-        """
-        Calculate similarity between two songs
-        Weights: Genre (50%), Artist (30%), Source (10%), Duration (10%)
-        """
         feat1 = ContentBasedFiltering.get_song_features(song1)
         feat2 = ContentBasedFiltering.get_song_features(song2)
-        
         similarity = 0.0
-        
-        # Genre similarity (50% weight) - strongest indicator
         if feat1['genre'] and feat2['genre'] and feat1['genre'] == feat2['genre']:
             similarity += 0.50
         elif feat1['genre_name'] and feat2['genre_name']:
-            # Partial credit for similar genre names (even if different IDs)
             if feat1['genre_name'].lower() in feat2['genre_name'].lower() or feat2['genre_name'].lower() in feat1['genre_name'].lower():
                 similarity += 0.25
-        
-        # Artist similarity (30% weight) - same artist is highly relevant
         if feat1['artist'] and feat2['artist']:
             if feat1['artist'] == feat2['artist']:
                 similarity += 0.30
-            elif feat1['artist'] in feat2['artist'] or feat2['artist'] in feat1['artist']:
-                similarity += 0.15  # Partial credit for containing artist name
-        
-        # Source similarity (10% weight) - maintains consistency
+            else:
+                shorter_artist = feat1['artist'] if len(feat1['artist']) <= len(feat2['artist']) else feat2['artist']
+                longer_artist = feat2['artist'] if shorter_artist == feat1['artist'] else feat1['artist']
+                if (
+                    len(shorter_artist) >= ContentBasedFiltering.MIN_ARTIST_PARTIAL_MATCH_LEN
+                    and shorter_artist in longer_artist
+                ):
+                    similarity += 0.15  
         if feat1['source'] == feat2['source']:
             similarity += 0.10
-        
-        # Duration similarity (10% weight) - similar length songs
         if feat1['duration'] > 0 and feat2['duration'] > 0:
             duration_diff = abs(feat1['duration'] - feat2['duration'])
-            # If duration is within 30 seconds, give full credit
             if duration_diff <= 30:
                 similarity += 0.10
             # Partial credit if within 60 seconds
             elif duration_diff <= 60:
                 similarity += 0.05
-        
         return similarity
     
     @staticmethod
@@ -236,10 +207,18 @@ class ContentBasedFiltering:
         
         # Sort by similarity (descending) and return top recommendations
         song_similarities.sort(key=lambda x: x[1], reverse=True)
-        recommended_songs = [song for song, score in song_similarities[:limit]]
-        
-        if recommended_songs:
-            return Song.objects.filter(id__in=[s.id for s in recommended_songs])
+
+        # Build a larger ranked pool first, then apply diversity scoring.
+        ranked_songs = [song for song, score in song_similarities]
+        ranked_song_ids = [song.id for song in ranked_songs[: max(limit * 3, limit)]]
+
+        if ranked_song_ids:
+            ranked_queryset = ContentBasedFiltering._build_ordered_queryset(ranked_song_ids)
+            diverse_songs = RecommendationScorer.score_by_genre_diversity(
+                ranked_queryset,
+                target_count=limit,
+            )
+            return ContentBasedFiltering._build_ordered_queryset([song.id for song in diverse_songs])
         
         return Song.objects.none()
     
@@ -291,9 +270,9 @@ class ContentBasedFiltering:
     
     @staticmethod
     def recommend_by_preferred_genres(user, limit=10):
-        """Recommend songs from user's preferred genres or open-source music for cold-start users"""
+        """Recommend songs from user's preferred genres or Jamendo for cold-start users."""
         if not Playlist.objects.filter(user=user).exists():
-            return ContentBasedFiltering.recommend_open_source_cold_start(limit)
+            return ContentBasedFiltering.recommend_cold_start_mix(limit)
 
         try:
             user_pref = UserPreference.objects.get(user=user)
@@ -307,21 +286,59 @@ class ContentBasedFiltering:
             pass
         
         # If no preferences, return recently added songs from popular genres
-        return Song.objects.all().order_by('-created_at')[:limit]
+        return Song.objects.filter(source='itunes').order_by('-created_at')[:limit]
 
     @staticmethod
-    def recommend_open_source_cold_start(limit=10):
-        """Return a database queryset of open-source songs for users with no playlist history."""
-        tracks = OpenSourceMusicAPI.search_tracks(query="", limit=max(limit, 10))
+    def recommend_cold_start_mix(limit=10):
+        """Blend public playlist popularity, recent trends, and Jamendo tracks for users with no playlists."""
+        recommendation_ids = []
+        seen_ids = set()
+
+        public_songs = (
+            Song.objects.filter(playlists__is_public=True)
+            .annotate(public_playlist_count=Count('playlists', distinct=True))
+            .order_by('-like_count', '-play_count', '-public_playlist_count', '-created_at')
+        )
+
+        for song in public_songs:
+            if song.id not in seen_ids:
+                recommendation_ids.append(song.id)
+                seen_ids.add(song.id)
+            if len(recommendation_ids) >= limit:
+                return ContentBasedFiltering._build_ordered_queryset(recommendation_ids[:limit])
+
+        jamendo_songs = ContentBasedFiltering.recommend_itunes_cold_start(limit=max(limit - len(recommendation_ids), 0))
+        for song in jamendo_songs:
+            if song.id not in seen_ids:
+                recommendation_ids.append(song.id)
+                seen_ids.add(song.id)
+            if len(recommendation_ids) >= limit:
+                return ContentBasedFiltering._build_ordered_queryset(recommendation_ids[:limit])
+
+        if len(recommendation_ids) < limit:
+            fallback_songs = Song.objects.filter(source='itunes').order_by('-like_count', '-play_count', '-created_at')
+            for song in fallback_songs:
+                if song.id not in seen_ids:
+                    recommendation_ids.append(song.id)
+                    seen_ids.add(song.id)
+                if len(recommendation_ids) >= limit:
+                    break
+
+        return ContentBasedFiltering._build_ordered_queryset(recommendation_ids[:limit])
+
+    @staticmethod
+    def recommend_itunes_cold_start(limit=10):
+        """Return a database queryset of iTunes songs for users with no playlist history."""
+        tracks = iTunesAPI.get_popular_tracks(limit=max(limit, 10))
         created_song_ids = []
 
         for track in tracks:
             external_id = str(track.get('external_id') or track.get('id') or track.get('title') or '')
-            song = Song.objects.filter(source='opensource', external_id=external_id).first()
+            song = Song.objects.filter(source='itunes', external_id=external_id).first()
 
             if song is None:
                 song = Song.objects.filter(
-                    source='opensource',
+                    source='itunes',
                     title__iexact=track.get('title', ''),
                     artist__iexact=track.get('artist', ''),
                 ).first()
@@ -335,7 +352,7 @@ class ContentBasedFiltering:
                     cover_image_url=track.get('cover_image') or '',
                     duration=track.get('duration') or None,
                     external_id=external_id,
-                    source='opensource',
+                    source='itunes',
                 )
 
             created_song_ids.append(song.id)

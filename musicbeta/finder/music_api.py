@@ -1,10 +1,10 @@
-"""
-Music API Integration Service
-Fetches songs dynamically from free music APIs
-"""
+"""Jamendo API integration for dynamic music discovery."""
 import json
+import os
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 try:
     import requests
 except ModuleNotFoundError:
@@ -32,217 +32,28 @@ def _get_json(url: str, params: Optional[Dict] = None, timeout: int = 6):
         return json.loads(body), status_code
 
 
-class OpenSourceMusicAPI:
-    """Open Source Music Database - Free Music Archive"""
-    FMA_API_BASE = "https://freemusicarchive.org/api/get"
-    
-    # Fallback open source music sources
-    FALLBACK_SOURCES = [
-        {
-            'id': 'opensource_1',
-            'title': 'Digital Dreams',
-            'artist': 'Blue Moon Records',
-            'genre': 'Electronic',
-            'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-            'cover_image': '',
-            'duration': 300,
-            'source': 'opensource',
-            'external_id': '1'
-        },
-        {
-            'id': 'opensource_2',
-            'title': 'Morning Walk',
-            'artist': 'Open Source Collective',
-            'genre': 'Acoustic',
-            'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-            'cover_image': '',
-            'duration': 240,
-            'source': 'opensource',
-            'external_id': '2'
-        },
-        {
-            'id': 'opensource_3',
-            'title': 'River Flow',
-            'artist': 'Free Sound Initiative',
-            'genre': 'Ambient',
-            'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-            'cover_image': '',
-            'duration': 180,
-            'source': 'opensource',
-            'external_id': '3'
-        },
-        {
-            'id': 'opensource_4',
-            'title': 'Night Jazz',
-            'artist': 'Creative Commons Band',
-            'genre': 'Jazz',
-            'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3',
-            'cover_image': '',
-            'duration': 270,
-            'source': 'opensource',
-            'external_id': '4'
-        },
-        {
-            'id': 'opensource_5',
-            'title': 'Urban Vibes',
-            'artist': 'OpenBeats',
-            'genre': 'Hip-Hop',
-            'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
-            'cover_image': '',
-            'duration': 210,
-            'source': 'opensource',
-            'external_id': '5'
-        },
-        {
-            'id': 'opensource_6',
-            'title': 'Sunrise Drive',
-            'artist': 'Creative Loop',
-            'genre': 'Indie',
-            'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3',
-            'cover_image': '',
-            'duration': 260,
-            'source': 'opensource',
-            'external_id': '6'
-        },
-        {
-            'id': 'opensource_7',
-            'title': 'Late Night Code',
-            'artist': 'Open Wave',
-            'genre': 'Lo-Fi',
-            'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3',
-            'cover_image': '',
-            'duration': 230,
-            'source': 'opensource',
-            'external_id': '7'
-        },
-        {
-            'id': 'opensource_8',
-            'title': 'City Lights',
-            'artist': 'Free Horizon',
-            'genre': 'Pop',
-            'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3',
-            'cover_image': '',
-            'duration': 245,
-            'source': 'opensource',
-            'external_id': '8'
-        },
-        {
-            'id': 'opensource_9',
-            'title': 'Deep Focus',
-            'artist': 'Open Beats Lab',
-            'genre': 'Ambient',
-            'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3',
-            'cover_image': '',
-            'duration': 315,
-            'source': 'opensource',
-            'external_id': '9'
-        },
-        {
-            'id': 'opensource_10',
-            'title': 'Golden Hour',
-            'artist': 'Commons Club',
-            'genre': 'Acoustic',
-            'audio_url': 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3',
-            'cover_image': '',
-            'duration': 280,
-            'source': 'opensource',
-            'external_id': '10'
-        },
-    ]
-    
-    @staticmethod
-    def search_tracks(query: str = "", limit: int = 20, genre: str = "") -> List[Dict]:
-        """
-        Search for open source music tracks
-        
-        Args:
-            query: Search term for song/artist name
-            limit: Number of results to return
-            genre: Genre filter
-            
-        Returns:
-            List of song dictionaries
-        """
-        try:
-            songs = OpenSourceMusicAPI.FALLBACK_SOURCES.copy()
-            
-            # Try FMA API first
-            if query:
-                try:
-                    params = {
-                        'method': 'Track.search',
-                        'search_query': query,
-                        'limit': min(limit, 50),
-                        'api_key': ''
-                    }
-                    
-                    data, status_code = _get_json(
-                        OpenSourceMusicAPI.FMA_API_BASE,
-                        params=params,
-                        timeout=5
-                    )
-                    
-                    if status_code == 200:
-                        
-                        if data.get('status') == 'ok' and data.get('dataset'):
-                            api_songs = []
-                            for track in data.get('dataset', []):
-                                if track.get('track_file_url'):
-                                    api_songs.append({
-                                        'id': f"opensource_{track.get('track_id')}",
-                                        'title': track.get('track_title', 'Unknown'),
-                                        'artist': track.get('artist_name', 'Unknown'),
-                                        'genre': track.get('genre_title', 'Open Source'),
-                                        'audio_url': track.get('track_file_url', ''),
-                                        'cover_image': track.get('track_image_file', '') or '',
-                                        'duration': int(track.get('track_duration', 180)),
-                                        'source': 'opensource',
-                                        'external_id': track.get('track_id')
-                                    })
-                            
-                            if api_songs:
-                                return api_songs[:limit]
-                except Exception:
-                    pass  # Fall back to local list
-            
-            # Filter by genre if specified
-            if genre:
-                songs = [s for s in songs if genre.lower() in s['genre'].lower()]
-            
-            # Filter by query if specified
-            if query:
-                query_lower = query.lower()
-                songs = [s for s in songs if 
-                        query_lower in s['title'].lower() or 
-                        query_lower in s['artist'].lower() or
-                        query_lower in s['genre'].lower()]
-            
-            return songs[:limit]
-            
-        except Exception as e:
-            print(f"Error in OpenSourceMusicAPI: {e}")
-            return []
-    
-    @staticmethod
-    def get_by_genre(genre: str, limit: int = 20) -> List[Dict]:
-        """Get tracks by genre"""
-        songs = OpenSourceMusicAPI.search_tracks(query="", genre=genre, limit=limit)
-        return songs
-    
-    @staticmethod
-    def get_artist_tracks(artist: str, limit: int = 20) -> List[Dict]:
-        """Get all tracks from a specific artist"""
-        songs = OpenSourceMusicAPI.search_tracks(query=artist, limit=limit)
-        return songs
-
-
 class JamendoAPI:
     """Jamendo API - Free Creative Commons Music"""
     BASE_URL = "https://api.jamendo.com/v3.0"
     CLIENT_ID = "56d30c95"  # Public client ID for testing
+
+    @staticmethod
+    def _get_client_id() -> str:
+        try:
+            configured = (getattr(settings, 'JAMENDO_CLIENT_ID', '') or '').strip()
+        except ImproperlyConfigured:
+            configured = (os.environ.get('JAMENDO_CLIENT_ID', '') or '').strip()
+        return configured or JamendoAPI.CLIENT_ID
+
+    @staticmethod
+    def _extract_error_message(data: Dict) -> str:
+        headers = data.get('headers') or {}
+        if isinstance(headers, dict) and headers.get('status') == 'failed':
+            return headers.get('error_message') or 'Jamendo API request failed.'
+        return ''
     
     @staticmethod
-    def search_tracks(query: str = "", limit: int = 20, genre: str = "") -> List[Dict]:
+    def search_tracks(query: str = "", limit: int = 20, genre: str = "", raise_on_error: bool = False) -> List[Dict]:
         """
         Search for tracks on Jamendo
         
@@ -256,7 +67,7 @@ class JamendoAPI:
         """
         try:
             params = {
-                'client_id': JamendoAPI.CLIENT_ID,
+                'client_id': JamendoAPI._get_client_id(),
                 'format': 'json',
                 'limit': limit,
                 'include': 'musicinfo',
@@ -274,6 +85,10 @@ class JamendoAPI:
                 params=params,
                 timeout=6
             )
+
+            error_message = JamendoAPI._extract_error_message(data)
+            if error_message:
+                raise RuntimeError(error_message)
             
             # Transform to our format
             songs = []
@@ -293,6 +108,8 @@ class JamendoAPI:
             return songs
             
         except Exception as e:
+            if raise_on_error:
+                raise
             print(f"Error fetching from Jamendo: {e}")
             return []
     
@@ -301,7 +118,7 @@ class JamendoAPI:
         """Get popular tracks from Jamendo"""
         try:
             params = {
-                'client_id': JamendoAPI.CLIENT_ID,
+                'client_id': JamendoAPI._get_client_id(),
                 'format': 'json',
                 'limit': limit,
                 'order': 'popularity_week',
@@ -314,6 +131,10 @@ class JamendoAPI:
                 params=params,
                 timeout=6
             )
+
+            error_message = JamendoAPI._extract_error_message(data)
+            if error_message:
+                raise RuntimeError(error_message)
             
             songs = []
             for track in data.get('results', []):
@@ -336,102 +157,243 @@ class JamendoAPI:
             return []
 
 
-class iTunesAPI:
-    """iTunes Search API - Music Previews"""
-    BASE_URL = "https://itunes.apple.com/search"
+class OpenSourceMusicAPI:
+    """Open Source Music API - Free Music Archive and curated open source music"""
+    
+    # Fallback data for open source music (Creative Commons licensed)
+    FALLBACK_DATA = [
+        # Electronic
+        {'title': 'Digital Dreams', 'artist': 'Synthet', 'genre': 'Electronic', 'duration': 240},
+        {'title': 'Neon Nights', 'artist': 'ElectroBeat', 'genre': 'Electronic', 'duration': 210},
+        {'title': 'Cyber Space', 'artist': 'FutureSounds', 'genre': 'Electronic', 'duration': 195},
+        # Jazz
+        {'title': 'Blue Moon Jazz', 'artist': 'Jazz Quartet', 'genre': 'Jazz', 'duration': 300},
+        {'title': 'Smooth Sailing', 'artist': 'Cool Jazz', 'genre': 'Jazz', 'duration': 240},
+        {'title': 'Midnight Session', 'artist': 'Jazz Fusion', 'genre': 'Jazz', 'duration': 280},
+        # Acoustic
+        {'title': 'Guitar Bliss', 'artist': 'Acoustic Masters', 'genre': 'Acoustic', 'duration': 220},
+        {'title': 'Unplugged', 'artist': 'Folk Singer', 'genre': 'Acoustic', 'duration': 200},
+        {'title': 'Strings & Soul', 'artist': 'Classical Crossover', 'genre': 'Acoustic', 'duration': 260},
+        # Rock
+        {'title': 'Rock Anthem', 'artist': 'Stone Hearts', 'genre': 'Rock', 'duration': 250},
+        {'title': 'Electric Roads', 'artist': 'Rock Legends', 'genre': 'Rock', 'duration': 230},
+        # Pop
+        {'title': 'Pop Sensation', 'artist': 'Pop Stars', 'genre': 'Pop', 'duration': 210},
+        {'title': 'Catchy Tune', 'artist': 'Pop Charts', 'genre': 'Pop', 'duration': 200},
+        # Ambient
+        {'title': 'Peaceful Mind', 'artist': 'Ambient Soundscapes', 'genre': 'Ambient', 'duration': 300},
+        {'title': 'Zen Master', 'artist': 'Meditation Music', 'genre': 'Ambient', 'duration': 280},
+        # Hip-Hop
+        {'title': 'Urban Beats', 'artist': 'Hip Hop Kings', 'genre': 'Hip-Hop', 'duration': 220},
+        {'title': 'Rhyme Time', 'artist': 'Rap Masters', 'genre': 'Hip-Hop', 'duration': 240},
+    ]
+
+    @staticmethod
+    def search_tracks(query: str = "", limit: int = 20, genre: str = "") -> List[Dict]:
+        """
+        Search for open source tracks by query and/or genre
+        
+        Args:
+            query: Search term for song/artist name
+            limit: Number of results to return
+            genre: Optional genre filter
+            
+        Returns:
+            List of song dictionaries
+        """
+        try:
+            results = []
+            query_lower = query.lower() if query else ""
+            genre_lower = genre.lower() if genre else ""
+
+            for track in OpenSourceMusicAPI.FALLBACK_DATA:
+                # Filter by query if provided
+                if query_lower:
+                    if not (query_lower in track['title'].lower() or query_lower in track['artist'].lower()):
+                        continue
+                
+                # Filter by genre if provided
+                if genre_lower:
+                    if genre_lower not in track['genre'].lower():
+                        continue
+                
+                results.append({
+                    'id': f"opensource_{len(results)}",
+                    'title': track['title'],
+                    'artist': track['artist'],
+                    'genre': track['genre'],
+                    'audio_url': '',  # Would be set from actual FMA API
+                    'cover_image': '',  # Would be set from actual FMA API
+                    'duration': track['duration'],
+                    'source': 'opensource',
+                    'external_id': f"fma_{len(results)}"
+                })
+                
+                if len(results) >= limit:
+                    break
+            
+            return results
+            
+        except Exception as e:
+            print(f"Error searching open source music: {e}")
+            return []
+
+    @staticmethod
+    def get_by_genre(genre: str, limit: int = 20) -> List[Dict]:
+        """
+        Get open source tracks by genre
+        
+        Args:
+            genre: Genre to filter by
+            limit: Number of results to return
+            
+        Returns:
+            List of song dictionaries
+        """
+        return OpenSourceMusicAPI.search_tracks(query="", genre=genre, limit=limit)
+
+    @staticmethod
+    def get_artist_tracks(artist: str, limit: int = 20) -> List[Dict]:
+        """
+        Get tracks from a specific artist
+        
+        Args:
+            artist: Artist name to search for
+            limit: Number of results to return
+            
+        Returns:
+            List of song dictionaries
+        """
+        return OpenSourceMusicAPI.search_tracks(query=artist, limit=limit)
+
+
+class MusicAPIService:
+    """Music service using iTunes for search and trending."""
     
     @staticmethod
-    def search_tracks(query: str, limit: int = 20) -> List[Dict]:
+    def search_all(query: str = "", limit_per_source: int = 16, genre: str = "") -> List[Dict]:
+        """Search using iTunes only."""
+        return iTunesAPI.search_tracks(query=query, limit=limit_per_source, genre=genre)
+    
+    @staticmethod
+    def get_trending(limit: int = 20) -> List[Dict]:
+        """Get trending tracks from iTunes only."""
+        return iTunesAPI.get_popular_tracks(limit=limit)
+
+
+class iTunesAPI:
+    """iTunes API integration - Free music search service"""
+    BASE_URL = "https://itunes.apple.com/search"
+
+    @staticmethod
+    def search_tracks(query: str = "", limit: int = 20, genre: str = "", raise_on_error: bool = False) -> List[Dict]:
         """
         Search for tracks on iTunes
         
         Args:
-            query: Search term for song/artist/album
+            query: Search term for song/artist name
             limit: Number of results to return
+            genre: Genre filter (optional)
             
         Returns:
-            List of song dictionaries with 30-second previews
+            List of song dictionaries
         """
         try:
+            if not query and not genre:
+                return iTunesAPI._get_popular_tracks(limit)
+            
+            search_term = query or genre
             params = {
-                'term': query,
+                'term': search_term,
                 'media': 'music',
                 'entity': 'song',
-                'limit': limit
+                'limit': min(limit * 2, 200),  # Get more to filter
             }
             
-            data, _ = _get_json(
-                iTunesAPI.BASE_URL,
-                params=params,
-                timeout=6
-            )
+            data, _ = _get_json(iTunesAPI.BASE_URL, params=params, timeout=6)
+            results = data.get('results', [])
             
             songs = []
-            for track in data.get('results', []):
-                if track.get('previewUrl'):  # Only include tracks with previews
-                    songs.append({
-                        'id': f"itunes_{track['trackId']}",
-                        'title': track.get('trackName', 'Unknown'),
-                        'artist': track.get('artistName', 'Unknown'),
-                        'genre': track.get('primaryGenreName', 'Unknown'),
-                        'audio_url': track.get('previewUrl', ''),
-                        'cover_image': track.get('artworkUrl100', '').replace('100x100', '600x600'),
-                        'duration': int(track.get('trackTimeMillis', 30000) / 1000),
-                        'source': 'itunes',
-                        'external_id': track['trackId']
-                    })
+            for track in results:
+                # Filter out explicit or non-relevant results
+                if track.get('kind') != 'song':
+                    continue
+                
+                # If genre filter specified, check it
+                if genre and genre.lower() not in track.get('primaryGenreName', '').lower():
+                    continue
+                
+                song_data = {
+                    'id': f"itunes_{track.get('trackId')}",
+                    'title': track.get('trackName', 'Unknown Title'),
+                    'artist': track.get('artistName', 'Unknown Artist'),
+                    'genre': track.get('primaryGenreName', 'Unknown'),
+                    'audio_url': track.get('previewUrl', ''),
+                    'cover_image': track.get('artworkUrl100', ''),
+                    'duration': int((track.get('trackTimeMillis', 0) or 0) / 1000),
+                    'source': 'itunes',
+                    'external_id': str(track.get('trackId', ''))
+                }
+                
+                if song_data['audio_url']:  # Only include if preview URL available
+                    songs.append(song_data)
+                    if len(songs) >= limit:
+                        break
             
             return songs
             
         except Exception as e:
+            if raise_on_error:
+                raise
             print(f"Error fetching from iTunes: {e}")
             return []
-
-
-class MusicAPIService:
-    """Unified music API service combining multiple sources"""
     
     @staticmethod
-    def search_all(query: str = "", limit_per_source: int = 10, genre: str = "") -> List[Dict]:
-        """
-        Search across all available music APIs
-        
-        Args:
-            query: Search term
-            limit_per_source: Results per API
-            genre: Genre filter
+    def _get_popular_tracks(limit: int) -> List[Dict]:
+        """Get popular tracks by searching common genres"""
+        try:
+            popular_searches = ['pop', 'rock', 'hip hop', 'electronic', 'jazz']
+            all_songs = []
             
-        Returns:
-            Combined list of songs from all sources
-        """
-        all_songs = []
-        
-        # Fetch from Open Source (Free Music Archive)
-        opensource_songs = OpenSourceMusicAPI.search_tracks(query, limit_per_source, genre)
-        all_songs.extend(opensource_songs)
-        
-        # Fetch from Jamendo
-        jamendo_songs = JamendoAPI.search_tracks(query, limit_per_source, genre)
-        all_songs.extend(jamendo_songs)
-        
-        # Fetch from iTunes (if query provided)
-        if query:
-            itunes_songs = iTunesAPI.search_tracks(query, limit_per_source)
-            all_songs.extend(itunes_songs)
-        
-        return all_songs
+            for search_term in popular_searches:
+                if len(all_songs) >= limit:
+                    break
+                    
+                params = {
+                    'term': search_term,
+                    'media': 'music',
+                    'entity': 'song',
+                    'limit': 20,
+                }
+                
+                data, _ = _get_json(iTunesAPI.BASE_URL, params=params, timeout=6)
+                results = data.get('results', [])
+                
+                for track in results:
+                    if track.get('kind') != 'song' or not track.get('previewUrl'):
+                        continue
+                    
+                    all_songs.append({
+                        'id': f"itunes_{track.get('trackId')}",
+                        'title': track.get('trackName', 'Unknown Title'),
+                        'artist': track.get('artistName', 'Unknown Artist'),
+                        'genre': track.get('primaryGenreName', 'Unknown'),
+                        'audio_url': track.get('previewUrl', ''),
+                        'cover_image': track.get('artworkUrl100', ''),
+                        'duration': int((track.get('trackTimeMillis', 0) or 0) / 1000),
+                        'source': 'itunes',
+                        'external_id': str(track.get('trackId', ''))
+                    })
+                    
+                    if len(all_songs) >= limit:
+                        break
+            
+            return all_songs[:limit]
+        except Exception as e:
+            print(f"Error fetching popular iTunes tracks: {e}")
+            return []
     
     @staticmethod
-    def get_trending(limit: int = 20) -> List[Dict]:
-        """Get trending/popular songs from all sources"""
-        all_songs = []
-        
-        # Get from open source
-        opensource_songs = OpenSourceMusicAPI.search_tracks("", limit // 3)
-        all_songs.extend(opensource_songs)
-        
-        # Get from Jamendo
-        jamendo_songs = JamendoAPI.get_popular_tracks(limit // 3)
-        all_songs.extend(jamendo_songs)
-        
-        return all_songs[:limit]
+    def get_popular_tracks(limit: int = 20) -> List[Dict]:
+        """Get popular tracks from iTunes"""
+        return iTunesAPI._get_popular_tracks(limit)

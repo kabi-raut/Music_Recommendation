@@ -4,24 +4,27 @@
 
 {% block content %}
 <div class="container-fluid py-4 px-3 px-md-4">
-    <!-- Enhanced Header Section with Music Theme -->
+    <!-- Enhanced Header Section with Neon Music Theme -->
     <div class="mb-5">
-        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%); border-radius: 20px; padding: 2.5rem; border: 1px solid rgba(99, 102, 241, 0.15); position: relative; overflow: hidden;">
-            <div style="position: absolute; top: -50%; right: -10%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%); border-radius: 50%;"></div>
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border-radius: 24px; padding: 3rem; border: 2px solid rgba(99, 102, 241, 0.3); position: relative; overflow: hidden; box-shadow: 0 0 60px rgba(99, 102, 241, 0.3);">
+            <div style="position: absolute; top: -50%; right: -10%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%); border-radius: 50%; animation: float 8s ease-in-out infinite;"></div>
             <div style="position: relative; z-index: 1;">
-                <h2 class="mb-3" style="font-size: 2.5rem; font-weight: 900; letter-spacing: -0.5px;">
-                    <i class="fas fa-wave-square me-3" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: pulse 2s ease-in-out infinite;"></i>
-                    Welcome back, 
-                    <span style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                <h2 class="mb-3" style="font-size: 2.8rem; font-weight: 900; letter-spacing: -0.5px; text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);">
+                    <i class="fas fa-wave-square me-3" style="background: var(--gradient-music); -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: pulse 2s ease-in-out infinite; filter: drop-shadow(0 0 15px rgba(255, 107, 107, 0.6));"></i>
+                    Welcome back,
+                    <span style="background: var(--gradient-music); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.5));">
                         {{ request.user.username }}
                     </span>
                 </h2>
                 <div class="d-flex flex-wrap gap-3 align-items-center">
-                    <p class="text-secondary mb-0" style="font-size: 1.05rem; font-weight: 500;">
-                        <i class="fas fa-music me-2" style="color: var(--primary);"></i>Manage your playlists and discover amazing music
+                    <p class="mb-0" style="font-size: 1.15rem; font-weight: 500; color: var(--text-secondary);">
+                        <i class="fas fa-music me-2" style="color: #4ECDC4;"></i>Manage your playlists and discover amazing music
                     </p>
-                    <span class="now-playing">
-                        <i class="fas fa-music"></i>Music Discovery Mode
+                    <span class="badge" style="background: var(--gradient-purple); color: white; box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);">Playlist Slots: {{ playlists|length }}/{{ playlist_limit|floatformat:0 }}</span>
+                    <span class="badge" style="background: linear-gradient(135deg, #4ECDC4 0%, #45B7D1 100%); color: white; box-shadow: 0 0 15px rgba(78, 205, 196, 0.5);">Downloads: {% if subscription.can_download %}Enabled{% else %}Locked{% endif %}</span>
+                    <span class="badge" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; box-shadow: 0 0 15px rgba(240, 147, 251, 0.5);">Offline: {% if subscription.can_use_offline_mode %}Enabled{% else %}Locked{% endif %}</span>
+                    <span class="now-playing" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%); border: 2px solid rgba(99, 102, 241, 0.4); color: #fff;">
+                        <i class="fas fa-headphones-alt"></i>Music Discovery Mode
                     </span>
                 </div>
             </div>
@@ -90,9 +93,6 @@
                                             <i class="fas fa-trash"></i>
                                         </a>
                                     </div>
-                                    <a href="{% url 'compare_playlists' %}?p1={{ p.id }}" class="btn btn-outline-secondary btn-sm w-100" style="border-radius: 10px; font-size: 0.8rem;">
-                                        <i class="fas fa-exchange-alt me-1"></i>Compare with another user
-                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -111,9 +111,15 @@
                 </div>
                 <h5 class="mb-2" style="font-size: 1.5rem; font-weight: 700;">No playlists yet</h5>
                 <p class="text-secondary mb-4">Create your first playlist to organize your favorite music and build your personal library</p>
+                {% if has_playlist_capacity %}
                 <a href="{% url 'create_playlist' %}" class="btn btn-primary" style="padding: 0.75rem 2rem;">
                     <i class="fas fa-plus me-2"></i>Create Your First Playlist
                 </a>
+                {% else %}
+                <a href="{% url 'subscription_page' %}" class="btn btn-warning" style="padding: 0.75rem 2rem;">
+                    <i class="fas fa-crown me-2"></i>Upgrade to Add More Playlists
+                </a>
+                {% endif %}
             </div>
             {% endif %}
         </div>
@@ -141,6 +147,11 @@
                         <small class="text-secondary d-block mb-1">Email</small>
                         <p class="mb-0">{{ request.user.email }}</p>
                     </div>
+                    <div class="mt-3">
+                        <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary btn-sm w-100" style="border-radius: 10px;">
+                            <i class="fas fa-user-edit me-2"></i>Edit Profile
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -166,9 +177,15 @@
                 </div>
                 <div class="card-body" style="position: relative; z-index: 1;">
                     <div class="d-grid gap-2">
+                        {% if has_playlist_capacity %}
                         <a href="{% url 'create_playlist' %}" class="btn btn-primary btn-sm" style="border-radius: 12px;">
                             <i class="fas fa-plus me-2"></i>New Playlist
                         </a>
+                        {% else %}
+                        <a href="{% url 'subscription_page' %}" class="btn btn-warning btn-sm" style="border-radius: 12px;">
+                            <i class="fas fa-crown me-2"></i>Upgrade Plan
+                        </a>
+                        {% endif %}
                         <a href="{% url 'discover_music' %}" class="btn btn-outline-primary btn-sm" style="border-radius: 12px;">
                             <i class="fas fa-search me-2"></i>Discover Music
                         </a>
@@ -187,11 +204,14 @@
                         Get personalized music recommendations using advanced algorithms
                     </p>
                     <div class="d-grid gap-2">
-                        <a href="{% url 'collab_recommendations' %}" class="btn btn-sm" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px; border: none;">
-                            <i class="fas fa-users me-2"></i>Collaborative Filtering
+                        <a href="{% url 'personalized_recommendations_page' %}" class="btn btn-sm" style="background: linear-gradient(135deg, #667eea 0%, #f093fb 100%); color: white; border-radius: 12px; border: none;">
+                            <i class="fas fa-magic me-2"></i>Get My Recommendations
                         </a>
-                        <a href="{% url 'content_recommendations' %}" class="btn btn-sm" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 12px; border: none;">
-                            <i class="fas fa-tags me-2"></i>Content-Based
+                        <a href="{% url 'collab_recommendations' %}" class="btn btn-outline-primary btn-sm" style="border-radius: 12px;">
+                            <i class="fas fa-users me-2"></i>Collaborative Recommendations
+                        </a>
+                        <a href="{% url 'content_recommendations' %}" class="btn btn-outline-primary btn-sm" style="border-radius: 12px;">
+                            <i class="fas fa-sliders-h me-2"></i>Content-Based Recommendations
                         </a>
                     </div>
                 </div>

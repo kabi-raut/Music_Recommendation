@@ -4,19 +4,23 @@
 
 {% block content %}
 <div class="container-fluid px-0">
-  <!-- Hero Section with Wave Effect -->
-  <div class="hero-section mx-3 mx-md-4 mt-4 mb-5" style="position: relative; overflow: visible;">
-    <div class="container" style="position: relative; z-index: 2;">
-      <h1 class="mb-3" style="font-size: 3.5rem; font-weight: 900; letter-spacing: -1.5px;">
-        <i class="fas fa-play-circle me-3"></i>Discover Amazing Music
+  <!-- Hero Section with Vinyl Record Animation -->
+  <div class="hero-section mx-3 mx-md-4 mt-4 mb-5">
+    <!-- Spinning Vinyl Record -->
+    <div class="vinyl-record"></div>
+    
+    <div class="container">
+      <h1 class="mb-3">
+        <i class="fas fa-headphones-alt me-3"></i>Discover Amazing Music
       </h1>
-      <p class="lead mb-0" style="font-size: 1.35rem; opacity: 0.95; font-weight: 500;">
-        Explore songs, create playlists, and find your next favorite artist
+      <p class="lead mb-0">
+        Explore songs, create playlists, and find your next favorite artist with our intelligent music recommendation system
       </p>
     </div>
+    
     <!-- Wave SVG -->
-    <svg class="wave" style="position: absolute; bottom: -2px; left: 0; width: 100%;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" preserveAspectRatio="none">
-      <path fill="rgba(10, 10, 15, 0.8)" d="M0,50 C360,90 720,10 1080,50 C1440,90 1440,100 0,100 Z" style="animation: wave 10s ease-in-out infinite;" />
+    <svg class="wave" style="position: absolute; bottom: -2px; left: 0; width: 100%; z-index: 3;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" preserveAspectRatio="none">
+      <path fill="rgba(15, 15, 26, 0.95)" d="M0,50 C360,90 720,10 1080,50 C1440,90 1440,100 0,100 Z" style="animation: wave 10s ease-in-out infinite;" />
     </svg>
   </div>
 
@@ -29,7 +33,7 @@
           <i class="fas fa-search"></i>
           <h5>Search & Explore</h5>
           <p class="mb-4">Find songs, artists, and albums easily with our advanced search algorithms</p>
-          <a href="{% url 'discover_music' %}" class="btn btn-primary btn-sm mt-auto home-icon-btn">
+          <a href="{% url 'discover_music' %}" class="btn btn-primary btn-sm mt-auto">
             <i class="fas fa-arrow-right me-2"></i>Start Exploring
           </a>
         </div>
@@ -37,11 +41,11 @@
 
       <div class="col-md-6 col-lg-4">
         <div class="card h-100 feature-card" style="animation-delay: 0.15s;">
-          <i class="fas fa-globe"></i>
+          <i class="fas fa-compact-disc"></i>
           <h5>Live Music Streaming</h5>
-          <p class="mb-4">Stream millions of songs from Jamendo & iTunes without any downloads</p>
-          <a href="{% url 'discover_music' %}" class="btn btn-primary btn-sm mt-auto home-icon-btn">
-            <i class="fas fa-stream me-2"></i>Discover Now
+          <p class="mb-4">Stream live songs from Jamendo without any downloads</p>
+          <a href="{% url 'discover_music' %}" class="btn btn-primary btn-sm mt-auto">
+            <i class="fas fa-play-circle me-2"></i>Discover Now
           </a>
         </div>
       </div>
@@ -52,7 +56,7 @@
           <i class="fas fa-list-ul"></i>
           <h5>Create Playlists</h5>
           <p class="mb-4">Build personalized playlists and organize your favorite tracks effortlessly</p>
-          <a href="{% url 'sign_up' %}" class="btn btn-primary btn-sm mt-auto home-icon-btn">
+          <a href="{% url 'sign_up' %}" class="btn btn-primary btn-sm mt-auto">
             <i class="fas fa-plus-circle me-2"></i>Create Now
           </a>
         </div>
@@ -63,7 +67,7 @@
           <i class="fas fa-heart"></i>
           <h5>Personalized Experience</h5>
           <p class="mb-4">Get recommendations tailored to your unique music taste and preferences</p>
-          <a href="{% url 'sign_up' %}" class="btn btn-primary btn-sm mt-auto home-icon-btn">
+          <a href="{% url 'sign_up' %}" class="btn btn-primary btn-sm mt-auto">
             <i class="fas fa-star me-2"></i>Join Free
           </a>
         </div>
@@ -74,7 +78,7 @@
           <i class="fas fa-list-ul"></i>
           <h5>Create Playlists</h5>
           <p class="mb-4">Build personalized playlists and organize your favorite tracks effortlessly</p>
-          <a href="{% url 'create_playlist' %}" class="btn btn-primary btn-sm mt-auto home-icon-btn">
+          <a href="{% url 'create_playlist' %}" class="btn btn-primary btn-sm mt-auto">
             <i class="fas fa-plus-circle me-2"></i>Create Now
           </a>
         </div>
@@ -85,7 +89,7 @@
           <i class="fas fa-heart"></i>
           <h5>Your Dashboard</h5>
           <p class="mb-4">Manage your playlists and explore your complete music collection</p>
-          <a href="{% url 'dashboard' %}" class="btn btn-primary btn-sm mt-auto home-icon-btn">
+          <a href="{% url 'dashboard' %}" class="btn btn-primary btn-sm mt-auto">
             <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
           </a>
         </div>
@@ -93,36 +97,36 @@
       {% endif %}
     </div>
 
-    <!-- CTA Section with Gradient Border -->
+    <!-- CTA Section with Neon Glow Effect -->
     <div class="row mb-5">
       <div class="col-12">
-        <div class="card p-5 text-center" style="background: rgba(99, 102, 241, 0.04); border: 2px solid; border-image: linear-gradient(135deg, #6366F1, #EC4899) 1; border-radius: 20px; position: relative; overflow: hidden;">
-          <div style="position: absolute; top: -50%; right: -50%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%); animation: float 8s ease-in-out infinite;"></div>
+        <div class="card p-5 text-center" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(236, 72, 153, 0.15) 100%); border: 2px solid rgba(99, 102, 241, 0.4); border-radius: 30px; position: relative; overflow: hidden; box-shadow: 0 0 60px rgba(99, 102, 241, 0.3);">
+          <div style="position: absolute; top: -50%; right: -50%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%); animation: float 8s ease-in-out infinite;"></div>
           {% if not request.user.is_authenticated %}
-          <h3 class="mb-3" style="font-weight: 800;">
-            <i class="fas fa-rocket me-2" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+          <h3 class="mb-3" style="font-weight: 900; text-shadow: 0 0 20px rgba(99, 102, 241, 0.6);">
+            <i class="fas fa-rocket me-2" style="background: var(--gradient-music); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
             Ready to explore music?
           </h3>
-          <p class="text-secondary mb-4" style="font-size: 1.05rem;">Sign up now to unlock all features and build your perfect music collection</p>
+          <p class="mb-4" style="font-size: 1.15rem; color: var(--text-secondary);">Sign up now to unlock all features and build your perfect music collection</p>
           <div class="d-flex gap-3 justify-content-center flex-wrap">
-            <a href="{% url 'discover_music' %}" class="btn btn-primary home-icon-btn" style="padding: 0.875rem 2.5rem;">
+            <a href="{% url 'discover_music' %}" class="btn btn-primary" style="padding: 0.875rem 2.5rem;">
               <i class="fas fa-compass me-2"></i>Browse Now
             </a>
-            <a href="{% url 'sign_up' %}" class="btn btn-outline-primary home-icon-btn" style="padding: 0.875rem 2.5rem;">
+            <a href="{% url 'sign_up' %}" class="btn btn-outline-primary" style="padding: 0.875rem 2.5rem;">
               <i class="fas fa-user-plus me-2"></i>Create Account
             </a>
           </div>
           {% else %}
-          <h3 class="mb-3" style="font-weight: 800;">
-            <i class="fas fa-fire me-2" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+          <h3 class="mb-3" style="font-weight: 900; text-shadow: 0 0 20px rgba(99, 102, 241, 0.6);">
+            <i class="fas fa-fire me-2" style="background: var(--gradient-music); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
             Explore & Discover
           </h3>
-          <p class="text-secondary mb-4" style="font-size: 1.05rem;">Start building your perfect music collection and explore amazing songs</p>
+          <p class="mb-4" style="font-size: 1.15rem; color: var(--text-secondary);">Start building your perfect music collection and explore amazing songs</p>
           <div class="d-flex gap-3 justify-content-center flex-wrap">
-            <a href="{% url 'discover_music' %}" class="btn btn-primary home-icon-btn" style="padding: 0.875rem 2.5rem;">
+            <a href="{% url 'discover_music' %}" class="btn btn-primary" style="padding: 0.875rem 2.5rem;">
               <i class="fas fa-music me-2"></i>Discover Music
             </a>
-            <a href="{% url 'dashboard' %}" class="btn btn-outline-primary home-icon-btn" style="padding: 0.875rem 2.5rem;">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-primary" style="padding: 0.875rem 2.5rem;">
               <i class="fas fa-list me-2"></i>My Playlists
             </a>
           </div>
@@ -131,32 +135,32 @@
       </div>
     </div>
 
-    <!-- Animated Stats Section -->
+    <!-- Animated Stats Section with Neon Icons -->
     <div class="row g-4">
       <div class="col-md-4">
-        <div class="card text-center p-4" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0.02) 100%); border-color: rgba(99, 102, 241, 0.2);">
-          <div class="display-3 mb-3" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">
+        <div class="card text-center p-5" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0.04) 100%); border-color: rgba(99, 102, 241, 0.3);">
+          <div class="display-3 mb-3" style="background: var(--gradient-purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.6));">
             <i class="fas fa-infinity"></i>
           </div>
-          <h6 class="fw-bold mb-1" style="letter-spacing: 0.5px;">Unlimited Songs</h6>
+          <h6 class="fw-bold mb-1" style="letter-spacing: 0.5px; color: var(--text-primary);">Unlimited Songs</h6>
           <p class="text-secondary small mb-0">Access endless music</p>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card text-center p-4" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.08) 0%, rgba(236, 72, 153, 0.02) 100%); border-color: rgba(236, 72, 153, 0.2);">
-          <div class="display-3 mb-3" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">
-            <i class="fas fa-headphones"></i>
+        <div class="card text-center p-5" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.12) 0%, rgba(236, 72, 153, 0.04) 100%); border-color: rgba(236, 72, 153, 0.3);">
+          <div class="display-3 mb-3" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.6));">
+            <i class="fas fa-headphones-alt"></i>
           </div>
-          <h6 class="fw-bold mb-1" style="letter-spacing: 0.5px;">HD Quality</h6>
+          <h6 class="fw-bold mb-1" style="letter-spacing: 0.5px; color: var(--text-primary);">HD Quality</h6>
           <p class="text-secondary small mb-0">Crystal clear audio</p>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card text-center p-4" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.02) 100%); border-color: rgba(59, 130, 246, 0.2);">
-          <div class="display-3 mb-3" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">
+        <div class="card text-center p-5" style="background: linear-gradient(135deg, rgba(78, 205, 196, 0.12) 0%, rgba(78, 205, 196, 0.04) 100%); border-color: rgba(78, 205, 196, 0.3);">
+          <div class="display-3 mb-3" style="background: linear-gradient(135deg, #4ECDC4 0%, #45B7D1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; filter: drop-shadow(0 0 15px rgba(78, 205, 196, 0.6));">
             <i class="fas fa-cloud-download-alt"></i>
           </div>
-          <h6 class="fw-bold mb-1" style="letter-spacing: 0.5px;">Download Offline</h6>
+          <h6 class="fw-bold mb-1" style="letter-spacing: 0.5px; color: var(--text-primary);">Download Offline</h6>
           <p class="text-secondary small mb-0">Listen anywhere</p>
         </div>
       </div>
@@ -165,27 +169,20 @@
 </div>
 
 <style>
+  .navbar .container-fluid {
+    padding-left: 2.5rem !important;
+  }
+
+  @media (min-width: 992px) {
+    .navbar .container-fluid {
+      padding-left: 4rem !important;
+      padding-right: 2rem !important;
+    }
+  }
+
   @keyframes wave {
     0%, 100% { d: path("M0,50 C360,90 720,10 1080,50 C1440,90 1440,100 0,100 Z"); }
     50% { d: path("M0,50 C360,10 720,90 1080,50 C1440,10 1440,100 0,100 Z"); }
-  }
-
-  .home-icon-btn {
-    background: rgba(255, 255, 255, 0.88) !important;
-    color: #1e293b !important;
-    border: 1px solid rgba(99, 102, 241, 0.18) !important;
-    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
-  }
-
-  .home-icon-btn:hover {
-    background: rgba(255, 255, 255, 0.98) !important;
-    color: #0f172a !important;
-    border-color: rgba(99, 102, 241, 0.28) !important;
-  }
-
-  .home-icon-btn i {
-    color: var(--primary-dark);
-    opacity: 0.95;
   }
 </style>
 {% endblock %}

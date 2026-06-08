@@ -15,6 +15,29 @@
         <p class="text-secondary mb-0">{{ playlist.description }}</p>
     </div>
 
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h6 class="mb-1"><i class="fas fa-share-alt me-2"></i>Public Playlist Sharing</h6>
+                <small class="text-secondary">
+                    Visibility: 
+                    <span id="visibilityBadge" class="badge {% if playlist.is_public %}text-bg-success{% else %}text-bg-secondary{% endif %}">{% if playlist.is_public %}Public{% else %}Private{% endif %}</span>
+                </small>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <button id="toggleVisibilityBtn" class="btn btn-sm btn-outline-primary" data-playlist-id="{{ playlist.id }}">
+                    <i class="fas fa-globe me-1"></i>{% if playlist.is_public %}Make Private{% else %}Make Public{% endif %}
+                </button>
+                <button id="copyShareLinkBtn" class="btn btn-sm btn-outline-success" data-playlist-id="{{ playlist.id }}" {% if not playlist.is_public %}disabled{% endif %}>
+                    <i class="fas fa-link me-1"></i>Copy Share Link
+                </button>
+            </div>
+        </div>
+        <div class="card-footer bg-transparent border-top-0 pt-0">
+            <small id="shareStatus" class="text-secondary"></small>
+        </div>
+    </div>
+
     <!-- Subscription Status Info -->
     {% if not is_premium %}
     <div class="alert alert-warning alert-dismissible fade show" role="alert" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%); border: 1px solid rgba(255, 193, 7, 0.3);">
@@ -30,6 +53,9 @@
     <div class="alert alert-info alert-dismissible fade show" role="alert" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%); border: 1px solid rgba(99, 102, 241, 0.3);">
         <i class="fas fa-crown me-2" style="color: var(--primary);"></i>
         <strong>Premium Member:</strong> You have unlimited songs in your playlists!
+        <span class="ms-2 badge text-bg-primary">HD: {% if subscription.can_use_hd_audio %}Enabled{% else %}Standard{% endif %}</span>
+        <span class="ms-2 badge text-bg-info">Offline: {% if subscription.can_use_offline_mode %}Enabled{% else %}Upgrade Required{% endif %}</span>
+        <span class="ms-2 badge text-bg-success">Download: {% if subscription.can_download %}Enabled{% else %}Upgrade Required{% endif %}</span>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endif %}
@@ -54,10 +80,28 @@
 
     <!-- Songs List -->
     {% if songs %}
+    <form method="post" action="{% url 'bulk_remove_songs_from_playlist' playlist.id %}" id="bulkRemoveSongsForm" class="mb-4">
+        {% csrf_token %}
+        <div class="card border-0 shadow-sm mb-3" style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%); border-radius: 18px;">
+            <div class="card-body d-flex flex-wrap gap-3 align-items-end">
+                <div class="flex-grow-1" style="min-width: 240px;">
+                    <label class="form-label fw-semibold">Remove selected songs</label>
+                    <p class="text-secondary small mb-0">Tick the songs you want to delete from this playlist, then remove them together.</p>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Remove Selected
+                    </button>
+                </div>
+            </div>
+        </div>
     <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
         {% for song in songs %}
         <div class="col">
-            <div class="card h-100">
+            <div class="card h-100 position-relative">
+                <div style="position: absolute; top: 12px; left: 12px; z-index: 3;">
+                    <input class="form-check-input" type="checkbox" name="song_ids" value="{{ song.id }}" form="bulkRemoveSongsForm" style="width: 1.15rem; height: 1.15rem;">
+                </div>
                 <!-- Cover Image -->
                 <div class="position-relative" style="height: 180px; background-color: var(--tertiary-bg); overflow: hidden;">
                     {% if song.get_cover_image %}
@@ -79,6 +123,11 @@
                     <p class="card-text text-secondary small mb-2">
                         <i class="fas fa-database me-1"></i>{{ song.source|upper }}
                     </p>
+                    <div class="mb-2">
+                        <span class="badge {% if song.id in liked_song_ids %}text-bg-danger{% else %}text-bg-light{% endif %}" style="border: 1px solid rgba(99, 102, 241, 0.1);">
+                            <i class="fas fa-heart me-1"></i>{% if song.id in liked_song_ids %}Liked by you{% else %}Not liked{% endif %}
+                        </span>
+                    </div>
                     
                     <!-- Audio Player -->
                     {% if song.get_audio_source %}
@@ -87,20 +136,49 @@
                             <source src="{{ song.get_audio_source }}" type="audio/mpeg">
                             Your browser does not support the audio element.
                         </audio>
+                        <div class="d-flex gap-2 mt-2">
+                            <button class="btn btn-sm btn-outline-secondary w-50" type="button"
+                                    data-mini-player-track="true"
+                                    data-play-now-title="{{ song.title|escape }}"
+                                    data-play-now-artist="{{ song.artist|escape }}"
+                                    data-play-now-url="{{ song.get_audio_source|escape }}">
+                                <i class="fas fa-play me-1"></i>Play
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary w-50" type="button"
+                                    data-mini-player-track="true"
+                                    data-queue-title="{{ song.title|escape }}"
+                                    data-queue-artist="{{ song.artist|escape }}"
+                                    data-queue-url="{{ song.get_audio_source|escape }}">
+                                <i class="fas fa-list me-1"></i>Queue
+                            </button>
+                        </div>
                     </div>
                     {% endif %}
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="card-footer bg-transparent border-top">
-                    <div class="d-flex gap-2">
-                        {% if song.audio_file %}
+                    <div class="d-flex gap-2 align-items-center">
+                        <button type="button"
+                                class="btn btn-sm {% if song.id in liked_song_ids %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                                data-like-button="true"
+                                data-song-id="{{ song.id }}"
+                                data-liked="{% if song.id in liked_song_ids %}1{% else %}0{% endif %}"
+                                title="{% if song.id in liked_song_ids %}Unlike{% else %}Like{% endif %} this song"
+                                style="border-radius: 10px; min-width: 42px;">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                        {% if song.audio_file and subscription.can_download %}
                         <a href="{{ song.audio_file.url }}" download class="btn btn-outline-primary btn-sm flex-grow-1">
-                            <i class="fas fa-download"></i>
+                            <i class="fas fa-download me-1"></i>Download
+                        </a>
+                        {% elif song.audio_url and subscription.can_download %}
+                        <a href="{{ song.audio_url }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm flex-grow-1">
+                            <i class="fas fa-download me-1"></i>Download
                         </a>
                         {% elif song.audio_url %}
-                        <a href="{{ song.audio_url }}" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm flex-grow-1">
-                            <i class="fas fa-play me-1"></i>Open
+                        <a href="{% url 'subscription_page' %}" class="btn btn-outline-secondary btn-sm flex-grow-1" title="Upgrade plan to download songs.">
+                            <i class="fas fa-lock me-1"></i>Download Locked
                         </a>
                         {% endif %}
                         <a href="{% url 'remove_song_from_playlist' playlist.id song.id %}" class="btn btn-outline-danger btn-sm" title="Remove from playlist" onclick="return confirm('Remove this song from your playlist?')">
@@ -112,6 +190,7 @@
         </div>
         {% endfor %}
     </div>
+    </form>
     {% else %}
     <div class="card border-0 p-5 text-center">
         <i class="fas fa-music fa-5x text-secondary opacity-50 mb-4"></i>
@@ -123,4 +202,103 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggleVisibilityBtn');
+    const copyBtn = document.getElementById('copyShareLinkBtn');
+    const statusEl = document.getElementById('shareStatus');
+    const visibilityBadge = document.getElementById('visibilityBadge');
+    const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || '';
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', async function() {
+            const playlistId = this.dataset.playlistId;
+            try {
+                const response = await fetch(`/api/playlist/${playlistId}/toggle-visibility/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Could not update visibility');
+
+                this.innerHTML = data.is_public
+                    ? '<i class="fas fa-globe me-1"></i>Make Private'
+                    : '<i class="fas fa-globe me-1"></i>Make Public';
+                if (copyBtn) copyBtn.disabled = !data.is_public;
+                if (visibilityBadge) {
+                    visibilityBadge.textContent = data.is_public ? 'Public' : 'Private';
+                    visibilityBadge.classList.toggle('text-bg-success', data.is_public);
+                    visibilityBadge.classList.toggle('text-bg-secondary', !data.is_public);
+                }
+                if (statusEl) statusEl.textContent = data.message;
+            } catch (err) {
+                if (statusEl) statusEl.textContent = err.message;
+            }
+        });
+    }
+
+    if (copyBtn) {
+        copyBtn.addEventListener('click', async function() {
+            const playlistId = this.dataset.playlistId;
+            try {
+                const response = await fetch(`/api/playlist/${playlistId}/share-link/`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Could not get share link');
+                await navigator.clipboard.writeText(data.full_url);
+                if (statusEl) statusEl.textContent = 'Share link copied to clipboard.';
+            } catch (err) {
+                if (statusEl) statusEl.textContent = err.message;
+            }
+        });
+    }
+
+    async function toggleLike(button) {
+        const songId = button.dataset.songId;
+        try {
+            const response = await fetch('{% url 'like_song' %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: new URLSearchParams({ song_id: songId }),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Could not update like');
+
+            const liked = data.action === 'liked';
+            button.dataset.liked = liked ? '1' : '0';
+            button.classList.toggle('btn-danger', liked);
+            button.classList.toggle('btn-outline-danger', !liked);
+
+            const badge = button.closest('.card').querySelector('.badge');
+            if (badge) {
+                badge.classList.toggle('text-bg-danger', liked);
+                badge.classList.toggle('text-bg-light', !liked);
+                badge.innerHTML = '<i class="fas fa-heart me-1"></i>' + (liked ? 'Liked by you' : 'Not liked');
+            }
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    document.querySelectorAll('[data-like-button="true"]').forEach((button) => {
+        button.addEventListener('click', () => toggleLike(button));
+    });
+});
+</script>
 {% endblock %}

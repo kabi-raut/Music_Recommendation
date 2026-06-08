@@ -17,6 +17,10 @@
                     </div>
                 </div>
                 <div class="card-body p-4 p-md-5">
+                    <div class="alert alert-info">
+                        <i class="fas fa-layer-group me-2"></i>
+                        Playlist capacity: <strong>{{ current_playlists }}</strong>/<strong>{{ playlist_limit|floatformat:0 }}</strong>
+                    </div>
                     <form method="post">
                         {% csrf_token %}
                         
@@ -38,10 +42,15 @@
                             <a href="{% url 'dashboard' %}" class="btn btn-outline-primary flex-grow-1" style="padding: 0.75rem 1.5rem;">
                                 <i class="fas fa-arrow-left me-2"></i>Cancel
                             </a>
-                            <button type="submit" class="btn btn-primary flex-grow-1" style="padding: 0.75rem 1.5rem;">
+                            <button type="submit" class="btn btn-primary flex-grow-1" style="padding: 0.75rem 1.5rem;" {% if current_playlists >= playlist_limit %}disabled{% endif %}>
                                 <i class="fas fa-check me-2"></i>Create Playlist
                             </button>
                         </div>
+                        {% if current_playlists >= playlist_limit %}
+                        <div class="small text-warning mt-3">
+                            <i class="fas fa-exclamation-triangle me-1"></i>Plan limit reached. Upgrade your plan to create more playlists.
+                        </div>
+                        {% endif %}
                     </form>
                 </div>
             </div>

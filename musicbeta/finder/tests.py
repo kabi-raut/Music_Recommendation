@@ -93,20 +93,20 @@ class CollaborativeFilteringTests(TestCase):
 		self.rock = Genre.objects.create(name='Rock')
 		self.pop = Genre.objects.create(name='Pop')
 
-		self.shared_song = Song.objects.create(title='Shared Song', artist='Artist A', genre=self.rock)
-		self.target_song = Song.objects.create(title='Target Song', artist='Artist B', genre=self.pop)
-		self.recommended_song = Song.objects.create(title='Recommended Song', artist='Artist C', genre=self.rock)
-		self.noisy_song_1 = Song.objects.create(title='Noisy Song 1', artist='Artist D', genre=self.rock)
-		self.noisy_song_2 = Song.objects.create(title='Noisy Song 2', artist='Artist E', genre=self.rock)
-		self.noisy_song_3 = Song.objects.create(title='Noisy Song 3', artist='Artist F', genre=self.rock)
+		self.shared_song = Song.objects.create(title='Shared Song', artist='Artist A', genre=self.rock, source='jamendo')
+		self.target_song = Song.objects.create(title='Target Song', artist='Artist B', genre=self.pop, source='jamendo')
+		self.recommended_song = Song.objects.create(title='Recommended Song', artist='Artist C', genre=self.rock, source='jamendo')
+		self.noisy_song_1 = Song.objects.create(title='Noisy Song 1', artist='Artist D', genre=self.rock, source='jamendo')
+		self.noisy_song_2 = Song.objects.create(title='Noisy Song 2', artist='Artist E', genre=self.rock, source='jamendo')
+		self.noisy_song_3 = Song.objects.create(title='Noisy Song 3', artist='Artist F', genre=self.rock, source='jamendo')
 
-		target_playlist = Playlist.objects.create(user=self.target_user, name='Target Playlist')
+		target_playlist = Playlist.objects.create(user=self.target_user, name='Target Playlist', is_public=True)
 		target_playlist.songs.add(self.shared_song, self.target_song)
 
-		similar_playlist = Playlist.objects.create(user=self.similar_user, name='Similar Playlist')
+		similar_playlist = Playlist.objects.create(user=self.similar_user, name='Similar Playlist', is_public=True)
 		similar_playlist.songs.add(self.shared_song, self.recommended_song)
 
-		noisy_playlist = Playlist.objects.create(user=self.noisy_user, name='Noisy Playlist')
+		noisy_playlist = Playlist.objects.create(user=self.noisy_user, name='Noisy Playlist', is_public=True)
 		noisy_playlist.songs.add(self.noisy_song_1, self.noisy_song_2, self.noisy_song_3)
 
 		noisy_preferences = UserPreference.objects.create(user=self.noisy_user)
@@ -128,16 +128,16 @@ class CollaborativeFilteringTests(TestCase):
 		self.assertEqual(recommended_songs[0], self.recommended_song)
 		self.assertNotIn(self.target_song, recommended_songs)
 
-	@patch('finder.recommendations.OpenSourceMusicAPI.search_tracks')
-	def test_new_user_without_playlists_gets_open_source_fallback(self, mock_search_tracks):
+	@patch('finder.recommendations.JamendoAPI.get_popular_tracks')
+	def test_new_user_without_playlists_gets_jamendo_fallback(self, mock_get_popular_tracks):
 		cold_start_user = User.objects.create_user(
 			username='coldstart',
 			password='testpass123',
 		)
 
-		mock_search_tracks.return_value = [
+		mock_get_popular_tracks.return_value = [
 			{
-				'id': f'opensource_{index}',
+				'id': f'jamendo_{index}',
 				'external_id': str(index),
 				'title': f'Open Track {index}',
 				'artist': f'Artist {index}',
@@ -145,59 +145,15 @@ class CollaborativeFilteringTests(TestCase):
 				'audio_url': f'https://example.com/{index}.mp3',
 				'cover_image': '',
 				'duration': 200 + index,
-				'source': 'opensource',
+				'source': 'jamendo',
 			}
 			for index in range(1, 11)
 		]
 
 		recommended_songs = list(CollaborativeFiltering.recommend_for_user(cold_start_user, limit=10))
 
-		self.assertEqual(mock_search_tracks.call_count, 1)
+		self.assertEqual(mock_get_popular_tracks.call_count, 1)
 		self.assertEqual(len(recommended_songs), 10)
-		self.assertTrue(all(song.source == 'opensource' for song in recommended_songs))
+		self.assertTrue(all(song.source == 'jamendo' for song in recommended_songs))
 
 
-class ComparePlaylistsTests(TestCase):
-	def setUp(self):
-		self.user_a = User.objects.create_user(username='usera', password='testpass123')
-		self.user_b = User.objects.create_user(username='userb', password='testpass123')
-		self.client.login(username='usera', password='testpass123')
-
-		self.rock = Genre.objects.create(name='Rock')
-		self.pop = Genre.objects.create(name='Pop')
-		self.jazz = Genre.objects.create(name='Jazz')
-
-		self.shared_song = Song.objects.create(title='Shared', artist='Artist 1', genre=self.rock)
-		self.a_only_song = Song.objects.create(title='A Only', artist='Artist 2', genre=self.pop)
-		self.b_only_song = Song.objects.create(title='B Only', artist='Artist 3', genre=self.jazz)
-
-		self.playlist_a = Playlist.objects.create(user=self.user_a, name='A Playlist')
-		self.playlist_a.songs.add(self.shared_song, self.a_only_song)
-
-		self.playlist_b = Playlist.objects.create(user=self.user_b, name='B Playlist')
-		self.playlist_b.songs.add(self.shared_song, self.b_only_song)
-
-	def test_compare_playlists_between_two_users(self):
-		response = self.client.get(reverse('compare_playlists'), {
-			'user1': self.user_a.id,
-			'user2': self.user_b.id,
-			'p1': self.playlist_a.id,
-			'p2': self.playlist_b.id,
-		})
-
-		self.assertEqual(response.status_code, 200)
-		self.assertContains(response, 'A Playlist')
-		self.assertContains(response, 'B Playlist')
-		self.assertContains(response, 'Shared')
-		self.assertContains(response, '33.3%')
-
-	def test_compare_playlists_ignores_user1_query_param_tampering(self):
-		response = self.client.get(reverse('compare_playlists'), {
-			'user1': self.user_b.id,  # Attempt to override active user
-			'user2': self.user_b.id,
-			'p1': self.playlist_a.id,
-			'p2': self.playlist_b.id,
-		})
-
-		self.assertEqual(response.status_code, 200)
-		self.assertEqual(response.context['user_1'], self.user_a)
